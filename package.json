@@ -1,0 +1,13 @@
+{
+  "name": "soroe",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "mobile": "pnpm --filter mobile",
+    "functions": "pnpm --filter functions",
+    "shared": "pnpm --filter @soroe/shared"
+  }
+}

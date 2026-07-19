@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# pnpm
+.pnpm-store/
+
+# build output
+functions/lib/
+packages/*/dist/
+
+# expo
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+apps/mobile/expo-env.d.ts
+
+# native
+apps/mobile/ios/
+apps/mobile/android/
+
+# env
+.env
+.env.local
+*.local
+
+# firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# os / editor
+.DS_Store
+*.log
+
+# claude code local settings
+.claude/settings.local.json
