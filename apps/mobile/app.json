@@ -45,6 +45,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "55e76d83-ba15-45f4-bb98-ec1c43976874"
+      }
+    },
+    "owner": "starfystarfys-team"
   }
 }

@@ -8,6 +8,11 @@
   "scripts": {
     "mobile": "pnpm --filter mobile",
     "functions": "pnpm --filter functions",
-    "shared": "pnpm --filter @soroe/shared"
+    "shared": "pnpm --filter @soroe/shared",
+    "lint": "pnpm --filter mobile run lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "build:functions": "pnpm --filter functions run build",
+    "ci": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions"
   }
 }

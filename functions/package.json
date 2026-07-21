@@ -7,8 +7,9 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "serve": "pnpm build && firebase emulators:start --only functions",
     "shell": "pnpm build && firebase functions:shell",
     "deploy": "firebase deploy --only functions"
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "firebase-tools": "^15.24.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
   }
 }
