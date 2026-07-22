@@ -5,3 +5,6 @@ export function pingHandler() {
 }
 
 export const ping = onCall(() => pingHandler());
+
+export { requestEmailOtp } from "./emailOtp/requestEmailOtp";
+export { verifyEmailOtp } from "./emailOtp/verifyEmailOtp";
