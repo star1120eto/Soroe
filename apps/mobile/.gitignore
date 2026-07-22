@@ -4,7 +4,7 @@
 node_modules/
 
 # Expo
-.expo/
+.expo/*
 dist/
 web-build/
 
@@ -50,3 +50,7 @@ expo-env.d.ts
 # expo-env.d.ts content is static (a single triple-slash reference) and is
 # tracked so CI's tsc can resolve it without running `expo start` first.
 !expo-env.d.ts
+
+# .expo/types/router.d.ts is static per route tree and tracked so CI's tsc
+# can resolve typed routes without running `expo start` first.
+!.expo/types/
