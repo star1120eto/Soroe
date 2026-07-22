@@ -3,6 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo-google-fonts/noto-sans-jp": "^0.4.3",
+    "@expo-google-fonts/zen-maru-gothic": "^0.4.1",
     "@expo/ui": "~57.0.7",
     "@react-native-firebase/analytics": "^25.1.0",
     "@react-native-firebase/app": "^25.1.0",
@@ -30,11 +32,14 @@
     "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
+    "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@iconify-json/ph": "^1.2.2",
+    "@iconify/utils": "^3.1.4",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "~29.5.14",
     "@types/react": "~19.2.2",
