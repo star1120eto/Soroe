@@ -12,7 +12,6 @@ packages/*/dist/
 apps/mobile/.expo/
 apps/mobile/dist/
 apps/mobile/web-build/
-apps/mobile/expo-env.d.ts
 
 # native
 apps/mobile/ios/
