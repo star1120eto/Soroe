@@ -4,10 +4,12 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { useAppFonts } from '@/design-system';
 import { SessionProvider, useSession } from '@/features/session/SessionProvider';
+import { connectEmulators } from '@/lib/firebase/connectEmulators';
 import { initializeWebFirebase } from '@/lib/firebase/initializeWebFirebase';
 
 SplashScreen.preventAutoHideAsync();
 initializeWebFirebase();
+connectEmulators();
 
 function RootNavigator() {
   const { status } = useSession();
@@ -30,7 +32,7 @@ function RootNavigator() {
       <Stack.Protected guard={status === 'authenticated'}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={status === 'unauthenticated'}>
+      <Stack.Protected guard={status === 'unauthenticated' || status === 'needsProfile'}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
       <Stack.Screen name="invite/[token]" />

@@ -12,8 +12,9 @@
     "lint": "pnpm --filter mobile run lint",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
+    "build:shared": "pnpm --filter @soroe/shared run build",
     "build:functions": "pnpm --filter functions run build",
-    "ci": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions"
+    "ci": "pnpm run build:shared && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions"
   },
   "pnpm": {
     "overrides": {
