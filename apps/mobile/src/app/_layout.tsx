@@ -4,20 +4,24 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { useAppFonts } from '@/design-system';
 import { SessionProvider, useSession } from '@/features/session/SessionProvider';
+import { initializeWebFirebase } from '@/lib/firebase/initializeWebFirebase';
 
 SplashScreen.preventAutoHideAsync();
+initializeWebFirebase();
 
 function RootNavigator() {
   const { status } = useSession();
   const [fontsLoaded] = useAppFonts();
 
+  const isReady = fontsLoaded && status !== 'loading';
+
   useEffect(() => {
-    if (fontsLoaded) {
+    if (isReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [isReady]);
 
-  if (!fontsLoaded) {
+  if (!isReady) {
     return null;
   }
 
