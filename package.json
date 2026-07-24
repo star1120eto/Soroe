@@ -14,5 +14,10 @@
     "test": "pnpm -r --if-present run test",
     "build:functions": "pnpm --filter functions run build",
     "ci": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions"
+  },
+  "pnpm": {
+    "overrides": {
+      "firebase": "12.15.0"
+    }
   }
 }

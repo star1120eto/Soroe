@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // AUTH-001: 本人のみusers/{uid}を読み書きできる。
+    // 他コレクションはLIST-001等で追加するまでデフォルト全拒否のまま。
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

@@ -6,6 +6,14 @@ const envSchema = z.object({
     .default("development"),
   EXPO_PUBLIC_REVENUECAT_IOS_API_KEY: z.string().min(1).optional(),
   EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY: z.string().min(1).optional(),
+  // Web版のみ使用。Firebase console「ウェブアプリを追加」で発行される値。
+  // iOS/AndroidはGoogleService-Info.plist/google-services.jsonから自動初期化されるため不要。
+  EXPO_PUBLIC_FIREBASE_WEB_API_KEY: z.string().min(1).optional(),
+  EXPO_PUBLIC_FIREBASE_WEB_AUTH_DOMAIN: z.string().min(1).optional(),
+  EXPO_PUBLIC_FIREBASE_WEB_PROJECT_ID: z.string().min(1).optional(),
+  EXPO_PUBLIC_FIREBASE_WEB_STORAGE_BUCKET: z.string().min(1).optional(),
+  EXPO_PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID: z.string().min(1).optional(),
+  EXPO_PUBLIC_FIREBASE_WEB_APP_ID: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse({
@@ -14,4 +22,14 @@ export const env = envSchema.parse({
     process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
   EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY:
     process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY,
+  EXPO_PUBLIC_FIREBASE_WEB_API_KEY: process.env.EXPO_PUBLIC_FIREBASE_WEB_API_KEY,
+  EXPO_PUBLIC_FIREBASE_WEB_AUTH_DOMAIN:
+    process.env.EXPO_PUBLIC_FIREBASE_WEB_AUTH_DOMAIN,
+  EXPO_PUBLIC_FIREBASE_WEB_PROJECT_ID:
+    process.env.EXPO_PUBLIC_FIREBASE_WEB_PROJECT_ID,
+  EXPO_PUBLIC_FIREBASE_WEB_STORAGE_BUCKET:
+    process.env.EXPO_PUBLIC_FIREBASE_WEB_STORAGE_BUCKET,
+  EXPO_PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID:
+    process.env.EXPO_PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID,
+  EXPO_PUBLIC_FIREBASE_WEB_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_WEB_APP_ID,
 });
