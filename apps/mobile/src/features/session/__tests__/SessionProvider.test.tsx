@@ -6,7 +6,6 @@ import { SessionProvider, useSession } from '../SessionProvider';
 
 jest.mock('../AuthGateway', () => ({
   subscribeToAuthState: jest.fn(),
-  signInAnonymously: jest.fn(),
   signOut: jest.fn(),
 }));
 jest.mock('../SessionRepository', () => ({
@@ -15,6 +14,13 @@ jest.mock('../SessionRepository', () => ({
 }));
 
 const mockFirebaseUser = { uid: 'uid-1' } as import('@react-native-firebase/auth').FirebaseAuthTypes.User;
+
+const existingProfile = {
+  uid: 'uid-1',
+  displayName: 'たろう',
+  language: 'ja' as const,
+  createdAt: 1,
+};
 
 describe('SessionProvider', () => {
   let authStateCallback: (user: typeof mockFirebaseUser | null) => void;
@@ -38,41 +44,56 @@ describe('SessionProvider', () => {
     await act(() => authStateCallback(null));
 
     expect(result.current.status).toBe('unauthenticated');
+    expect(result.current.profile).toBeNull();
   });
 
-  it('becomes authenticated without creating a profile when one already exists', async () => {
-    jest.mocked(SessionRepository.getUserProfile).mockResolvedValue({
-      uid: 'uid-1',
-      displayName: 'たろう',
-      language: 'ja',
-      createdAt: 1,
-    });
+  it('becomes authenticated and exposes the profile when one already exists', async () => {
+    jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(existingProfile);
 
     const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
 
     await act(() => authStateCallback(mockFirebaseUser));
     await waitFor(() => expect(result.current.status).toBe('authenticated'));
+
+    expect(result.current.profile).toEqual(existingProfile);
+    expect(SessionRepository.createUserProfile).not.toHaveBeenCalled();
+  });
+
+  it('becomes needsProfile without creating one when the user has no profile yet', async () => {
+    jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(null);
+
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+
+    await act(() => authStateCallback(mockFirebaseUser));
+    await waitFor(() => expect(result.current.status).toBe('needsProfile'));
 
     expect(SessionRepository.createUserProfile).not.toHaveBeenCalled();
   });
 
-  it('creates a placeholder profile on first sign-in', async () => {
+  it('createProfile stores the profile and becomes authenticated', async () => {
     jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(null);
-    jest.mocked(SessionRepository.createUserProfile).mockResolvedValue({
-      uid: 'uid-1',
-      displayName: '名称未設定',
-      language: 'ja',
-      createdAt: 1,
-    });
+    jest.mocked(SessionRepository.createUserProfile).mockResolvedValue(existingProfile);
 
     const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
 
     await act(() => authStateCallback(mockFirebaseUser));
-    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    await waitFor(() => expect(result.current.status).toBe('needsProfile'));
+
+    await act(() => result.current.createProfile({ displayName: 'たろう', language: 'ja' }));
 
     expect(SessionRepository.createUserProfile).toHaveBeenCalledWith('uid-1', {
-      displayName: '名称未設定',
+      displayName: 'たろう',
       language: 'ja',
     });
+    expect(result.current.status).toBe('authenticated');
+    expect(result.current.profile).toEqual(existingProfile);
+  });
+
+  it('createProfile rejects when no firebase user is signed in', async () => {
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+
+    await act(() => authStateCallback(null));
+
+    await expect(result.current.createProfile({ displayName: 'たろう', language: 'ja' })).rejects.toThrow();
   });
 });

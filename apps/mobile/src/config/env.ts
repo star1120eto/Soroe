@@ -14,6 +14,12 @@ const envSchema = z.object({
   EXPO_PUBLIC_FIREBASE_WEB_STORAGE_BUCKET: z.string().min(1).optional(),
   EXPO_PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID: z.string().min(1).optional(),
   EXPO_PUBLIC_FIREBASE_WEB_APP_ID: z.string().min(1).optional(),
+  // Google Sign-In (AUTH-003)。Firebase console「Google」プロバイダ有効化時に
+  // 発行されるOAuthクライアントID。webClientIdはAndroid/iOS双方で必須。
+  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: z.string().min(1).optional(),
+  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: z.string().min(1).optional(),
+  // Firebase Emulator接続先。未設定なら本番プロジェクトへ接続する。
+  EXPO_PUBLIC_FIREBASE_EMULATOR_HOST: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse({
@@ -32,4 +38,8 @@ export const env = envSchema.parse({
   EXPO_PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID:
     process.env.EXPO_PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID,
   EXPO_PUBLIC_FIREBASE_WEB_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_WEB_APP_ID,
+  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  EXPO_PUBLIC_FIREBASE_EMULATOR_HOST:
+    process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST,
 });

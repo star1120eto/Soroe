@@ -11,7 +11,10 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.soroe.app",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "associatedDomains": ["applinks:soroe.app"]
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:soroe.app"
+      ]
     },
     "android": {
       "package": "com.soroe.app",
@@ -27,8 +30,17 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "soroe.app", "pathPrefix": "/invite" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "soroe.app",
+              "pathPrefix": "/invite"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -50,7 +62,8 @@
       "@react-native-firebase/auth",
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/analytics",
-      "expo-font"
+      "expo-font",
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true,

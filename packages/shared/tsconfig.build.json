@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // functions(Cloud Functions)がCommonJSで動くため、両方から読める形で出力する。
+    // Metro(mobile)はCJSも解決できるので出力は1系統で足りる。
+    "module": "commonjs",
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false
+  },
+  "exclude": ["src/**/*.test.ts"]
+}

@@ -6,13 +6,16 @@ import { useSession } from '@/features/session/SessionProvider';
 
 // Placeholder for AUTH-006 (認証方法の追加・解除) and later profile/settings screens.
 export default function SettingsScreen() {
-  const { signOutForDev } = useSession();
+  const { profile, signOut } = useSession();
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
         <Text style={[Typography.title, styles.title]}>設定</Text>
-        <Button label="ログアウトする(開発用)" onPress={signOutForDev} variant="secondary" />
+        {profile ? (
+          <Text style={[Typography.body, styles.profileName]}>{profile.displayName}</Text>
+        ) : null}
+        <Button label="ログアウト" onPress={signOut} variant="secondary" />
       </View>
     </SafeAreaView>
   );
@@ -29,5 +32,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Colors.textPrimary,
+  },
+  profileName: {
+    color: Colors.textSecondary,
   },
 });

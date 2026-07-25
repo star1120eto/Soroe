@@ -1,48 +1,59 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { UserProfile } from '@soroe/shared';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { signInAnonymously, signOut, subscribeToAuthState } from './AuthGateway';
+import { signOut, subscribeToAuthState } from './AuthGateway';
 import { createUserProfile, getUserProfile } from './SessionRepository';
 
-// AUTH-002〜004(Apple/Google/メールOTP)実装までの暫定デフォルト。
-// 実サインイン方式が揃い次第、AUTH-005(初期プロフィール画面)が
-// 実際の入力値でcreateUserProfileを呼ぶよう置き換える。
-const PLACEHOLDER_PROFILE_DEFAULTS = { displayName: '名称未設定', language: 'ja' as const };
-
-export type SessionStatus = 'loading' | 'unauthenticated' | 'authenticated';
+// loading: 認証状態の確定待ち / needsProfile: Firebase Auth済みだが
+// users/{uid}未作成(AUTH-03の初期プロフィール画面へ誘導する状態)。
+export type SessionStatus = 'loading' | 'unauthenticated' | 'needsProfile' | 'authenticated';
 
 type SessionContextValue = {
   status: SessionStatus;
-  signInForDev: () => Promise<void>;
-  signOutForDev: () => Promise<void>;
+  profile: UserProfile | null;
+  createProfile: (input: { displayName: string; language: 'ja' | 'en' }) => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('loading');
+  const [uid, setUid] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const unsubscribe = subscribeToAuthState((firebaseUser) => {
+    return subscribeToAuthState((firebaseUser) => {
       if (!firebaseUser) {
+        setUid(null);
+        setProfile(null);
         setStatus('unauthenticated');
         return;
       }
 
-      getUserProfile(firebaseUser.uid)
-        .then((profile) => profile ?? createUserProfile(firebaseUser.uid, PLACEHOLDER_PROFILE_DEFAULTS))
-        .then(() => setStatus('authenticated'));
+      setUid(firebaseUser.uid);
+      getUserProfile(firebaseUser.uid).then((existing) => {
+        setProfile(existing);
+        setStatus(existing ? 'authenticated' : 'needsProfile');
+      });
     });
-
-    return unsubscribe;
   }, []);
 
+  const createProfile = useCallback(
+    async (input: { displayName: string; language: 'ja' | 'en' }) => {
+      if (!uid) {
+        throw new Error('サインインしていない状態ではプロフィールを作成できません');
+      }
+      const created = await createUserProfile(uid, input);
+      setProfile(created);
+      setStatus('authenticated');
+    },
+    [uid]
+  );
+
   const value = useMemo<SessionContextValue>(
-    () => ({
-      status,
-      signInForDev: signInAnonymously,
-      signOutForDev: signOut,
-    }),
-    [status]
+    () => ({ status, profile, createProfile, signOut }),
+    [status, profile, createProfile]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
