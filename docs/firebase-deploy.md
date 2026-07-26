@@ -14,7 +14,7 @@ node -e "process.stdout.write(require('crypto').randomBytes(32).toString('base64
 AUTH-004 の OTP をハッシュ化する鍵。ローカルの Emulator では
 `functions/.secret.local`(gitignore対象)が使われる。
 
-### 2. createCustomToken に必要な IAM 権限
+### 2. createCustomToken に必要な IAM 権限(付与済み)
 
 `verifyEmailOtp` は Firebase Auth の Custom Token を発行する。Admin SDK は
 サービスアカウントの秘密鍵を持たない環境では IAM の `signBlob` API で署名するため、
@@ -36,10 +36,18 @@ gcloud iam service-accounts add-iam-policy-binding \
   --project=soroe-1850a
 ```
 
-コンソールから行う場合は
-IAM と管理 → サービス アカウント → 上記アカウント → 権限 →
-「アクセスを許可」で、プリンシパルに同じアカウントを指定し
-ロール「サービス アカウント トークン作成者」を付与する。
+コンソールから行う場合は Google Cloud コンソール(Firebaseコンソールには無い)の
+IAM と管理 → サービス アカウント → 上記アカウント →
+**「アクセス権を持つプリンシパル」タブ** → 「アクセスを許可」で、
+プリンシパルに**同じアカウント自身**を指定しロール
+「サービス アカウント トークン作成者」を付与する。
+
+```
+https://console.cloud.google.com/iam-admin/serviceaccounts?project=soroe-1850a
+```
+
+自分自身を指定するのは、このサービスアカウントが自分の名前で JWT に
+署名することを許可する設定だからで、誤りではない。
 
 ## デプロイ
 
@@ -48,6 +56,12 @@ firebase deploy --only firestore:rules
 firebase deploy --only firestore:indexes
 firebase deploy --only functions
 ```
+
+## 動作確認済みの範囲(2026-07-27)
+
+Web preview から本番の Functions に対して、メール入力 → OTP発行 →
+コード検証 → Custom Token でのサインイン → Firestore へのプロフィール作成 →
+アプリ本体への到達までが通ることを確認した。
 
 ## 踏んだ落とし穴
 
