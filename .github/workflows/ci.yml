@@ -22,10 +22,11 @@ jobs:
           cache: pnpm
 
       # Firestore EmulatorがJavaを必要とする(Security Rulesのテスト用)。
+      # firebase-toolsはJDK 21以上を要求する。
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - run: pnpm install --frozen-lockfile
 
