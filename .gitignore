@@ -42,3 +42,6 @@ ui-debug.log
 
 # claude code local settings
 .claude/settings.local.json
+
+# JetBrains IDE (Android Studio)
+.idea/
