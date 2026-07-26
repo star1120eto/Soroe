@@ -2,10 +2,67 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(listId) {
+      return get(/databases/$(database)/documents/lists/$(listId)/members/$(request.auth.uid));
+    }
+
+    function isMember(listId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/lists/$(listId)/members/$(request.auth.uid));
+    }
+
+    function isOwner(listId) {
+      return isMember(listId) && memberDoc(listId).data.role == 'owner';
+    }
+
     // AUTH-001: 本人のみusers/{uid}を読み書きできる。
-    // 他コレクションはLIST-001等で追加するまでデフォルト全拒否のまま。
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+
+      // LIST-001: 一覧用の非正規化参照。集計値の整合はサーバーが持つため、
+      // 読取のみ許可し、作成・更新はCallable Functions(Admin SDK)に限る。
+      match /listRefs/{listId} {
+        allow read: if isSignedIn() && request.auth.uid == uid;
+        allow write: if false;
+      }
+    }
+
+    // LIST-001: リスト本体。閲覧はメンバーのみ。
+    // 作成・アーカイブ解除・削除はFree上限や所有権の原子的判定が要るため
+    // Callable Functions(Admin SDK)へ寄せ、client writeは拒否する。
+    match /lists/{listId} {
+      allow read: if isMember(listId);
+      allow create, delete: if false;
+      // 名前・色・アイコンなど表示用の情報だけをオーナーが直接更新できる。
+      // 所有者やアーカイブ状態の変更はFunctions経由に限る。
+      allow update: if isOwner(listId) &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'color', 'icon', 'updatedAt']);
+
+      // 項目CRUDはオフラインで完結する必要があるためclient writeを許可する。
+      match /items/{itemId} {
+        allow read: if isMember(listId);
+        allow create: if isMember(listId) &&
+          request.resource.data.createdBy == request.auth.uid &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() > 0 &&
+          request.resource.data.name.size() <= 100 &&
+          request.resource.data.deletedAt == null;
+        // 論理削除で運用するため物理削除は許可しない(30日後にサーバーが消す)。
+        allow update: if isMember(listId) &&
+          request.resource.data.createdBy == resource.data.createdBy;
+        allow delete: if false;
+      }
+
+      // メンバー構成の変更は招待・所有権移譲の検証を伴うためFunctionsに限る。
+      match /members/{uid} {
+        allow read: if isMember(listId);
+        allow write: if false;
+      }
     }
   }
 }
