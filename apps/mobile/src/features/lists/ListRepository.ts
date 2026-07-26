@@ -62,19 +62,31 @@ export function subscribeToList(
     }, onError);
 }
 
+/** 未同期の書込が残っているか。OFF-001のオフラインBanner判定に使う。 */
+export type ListItemsSnapshot = {
+  items: ListItem[];
+  hasPendingWrites: boolean;
+  isFromCache: boolean;
+};
+
 /** 詳細画面用。画面を離れたら必ず解除して読取課金を抑える。 */
 export function subscribeToListItems(
   listId: string,
-  onChange: (items: ListItem[]) => void,
+  onChange: (snapshot: ListItemsSnapshot) => void,
   onError: (error: Error) => void
 ): () => void {
   return itemsCollection(listId)
     .where('deletedAt', '==', null)
     .orderBy('sortOrder', 'asc')
-    .onSnapshot(
-      (snapshot) => onChange(snapshot.docs.map((doc) => toListItem(doc.id, listId, doc.data()))),
-      onError
-    );
+    // includeMetadataChangesが無いと、書込がサーバーへ到達した瞬間の
+    // hasPendingWrites=falseへの変化を受け取れない。
+    .onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
+      onChange({
+        items: snapshot.docs.map((doc) => toListItem(doc.id, listId, doc.data())),
+        hasPendingWrites: snapshot.metadata.hasPendingWrites,
+        isFromCache: snapshot.metadata.fromCache,
+      });
+    }, onError);
 }
 
 // ---- 項目CRUD (Rules付きclient write、オフライン可) ----
