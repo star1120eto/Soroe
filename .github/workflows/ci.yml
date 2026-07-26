@@ -21,6 +21,14 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # Firestore EmulatorがJavaを必要とする(Security Rulesのテスト用)。
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm run ci
+
+      - run: pnpm --filter functions run test:rules
