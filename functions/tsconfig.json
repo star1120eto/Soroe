@@ -1,16 +1,20 @@
 {
+  // ビルド(lib/index.js の生成)はesbuild(build.mjs)が担うため、
+  // この設定は型チェック専用。emit関連のオプションは持たせない。
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
     "lib": ["ES2022"],
-    "outDir": "lib",
-    "rootDir": "src",
     "strict": true,
-    "declaration": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "sourceMap": true
+    "noEmit": true,
+    // build.mjsのesbuild aliasと揃える。@soroe/sharedはdependenciesに
+    // 宣言せずバンドルへ取り込むため、型解決もソースを直接指す。
+    "paths": {
+      "@soroe/shared": ["../packages/shared/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"]
 }

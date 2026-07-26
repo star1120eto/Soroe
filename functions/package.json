@@ -7,7 +7,7 @@
   },
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --exclude 'src/rules/**'",
     "test:rules": "firebase emulators:exec --only firestore 'vitest run src/rules'",
@@ -16,12 +16,12 @@
     "deploy": "firebase deploy --only functions"
   },
   "dependencies": {
-    "@soroe/shared": "workspace:*",
     "firebase-admin": "^14.2.0",
     "firebase-functions": "^7.3.0"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",
+    "esbuild": "^0.28.1",
     "firebase-tools": "^15.24.0",
     "typescript": "~6.0.3",
     "vitest": "^4.1.10"
