@@ -65,7 +65,10 @@ export async function requestEmailOtpHandler(
   return { status: "sent" };
 }
 
-export const requestEmailOtp = onCall({ secrets: [otpHashSecret] }, async (request) => {
+// invoker: "public" はCloud Run側のIAMを開けるだけで、認証を無くす意味ではない。
+// サインイン前にも呼べる必要がある関数であり、悪用はレート制限(メール/IP/端末)と
+// 登録有無を区別しない共通応答で抑える。
+export const requestEmailOtp = onCall({ secrets: [otpHashSecret], invoker: "public" }, async (request) => {
   return requestEmailOtpHandler(
     request.data,
     request.rawRequest.ip ?? "unknown",

@@ -57,6 +57,8 @@ export async function verifyEmailOtpHandler(
   return { customToken };
 }
 
-export const verifyEmailOtp = onCall({ secrets: [otpHashSecret] }, async (request) => {
+// requestEmailOtpと同じくサインイン前に呼ばれる。試行回数上限と
+// 有効期限で保護しており、Cloud Run側のIAMだけを開ける。
+export const verifyEmailOtp = onCall({ secrets: [otpHashSecret], invoker: "public" }, async (request) => {
   return verifyEmailOtpHandler(request.data, otpHashSecret.value());
 });

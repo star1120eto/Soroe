@@ -1,5 +1,5 @@
 import auth from '@react-native-firebase/auth';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ListItem } from '@soroe/shared';
@@ -61,7 +61,8 @@ export default function OfflineSyncSpikeScreen() {
     );
   }, [uid]);
 
-  const items = snapshot?.items ?? [];
+  // snapshotがnullの間も安定した参照を返し、addItemの依存が毎回変わらないようにする。
+  const items = useMemo(() => snapshot?.items ?? [], [snapshot]);
 
   const addItem = useCallback(async () => {
     if (!uid || !draftName.trim()) {
