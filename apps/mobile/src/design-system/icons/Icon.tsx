@@ -1,7 +1,8 @@
 import Svg, { Path } from 'react-native-svg';
 
-import { PH_ICON_VIEWBOX_SIZE, phIconPaths, type PhIconName } from './ph-icon-paths';
+import { isPhIconName, PH_ICON_VIEWBOX_SIZE, phIconPaths, type PhIconName } from './ph-icon-paths';
 
+export { isPhIconName };
 export type { PhIconName };
 
 // Matches docs/DesignSystem.pdf 05 (24pxグリッド／ストローク相当1.5-1.75px).

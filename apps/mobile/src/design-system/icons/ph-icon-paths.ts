@@ -31,3 +31,7 @@ export const phIconPaths = {
 } as const;
 
 export type PhIconName = keyof typeof phIconPaths;
+
+export function isPhIconName(value: string): value is PhIconName {
+  return value in phIconPaths;
+}

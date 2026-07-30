@@ -61,6 +61,17 @@ describe('TemplateCard', () => {
   it('renders without throwing', async () => {
     await render(<TemplateCard icon="suitcase" title="1泊2日の旅行" subtitle="子連れの必需品・24項目" />);
   });
+
+  it('renders with a custom accent color without throwing', async () => {
+    await render(
+      <TemplateCard
+        icon="suitcase"
+        title="1泊2日の旅行"
+        subtitle="子連れの必需品・24項目"
+        accentColor="#D9825B"
+      />
+    );
+  });
 });
 
 describe('PlanCard', () => {
