@@ -36,7 +36,6 @@ export default function ListScreen() {
   const [showLimitBanner, setShowLimitBanner] = useState(false);
 
   useEffect(() => {
-    setError(null);
     return subscribeToUserLists(
       uid,
       (nextLists) => setLists(nextLists),
