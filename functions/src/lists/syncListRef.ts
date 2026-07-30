@@ -1,4 +1,4 @@
-import type { DocumentData, Firestore } from "firebase-admin/firestore";
+import type { DocumentData, Firestore, Timestamp } from "firebase-admin/firestore";
 import { getFirestore } from "firebase-admin/firestore";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 
@@ -22,13 +22,23 @@ function pickSyncedFields(data: DocumentData): SyncedFields {
   };
 }
 
+function timestampsEqual(a: unknown, b: unknown): boolean {
+  if (a === null && b === null) {
+    return true;
+  }
+  if (a instanceof Object && b instanceof Object && "isEqual" in a) {
+    return (a as Timestamp).isEqual(b as Timestamp);
+  }
+  return a === b;
+}
+
 function hasSyncedFieldChange(before: SyncedFields, after: SyncedFields): boolean {
   return (
     before.name !== after.name ||
     before.type !== after.type ||
     before.color !== after.color ||
     before.icon !== after.icon ||
-    before.archivedAt !== after.archivedAt
+    !timestampsEqual(before.archivedAt, after.archivedAt)
   );
 }
 

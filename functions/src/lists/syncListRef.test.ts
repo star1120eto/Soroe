@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { Timestamp } from "firebase-admin/firestore";
 
 import { syncListRefHandler } from "./syncListRef";
 
@@ -73,6 +74,23 @@ describe("syncListRefHandler", () => {
     await syncListRefHandler(db as never, "list-1", BASE_FIELDS, {
       ...BASE_FIELDS,
       color: "danger",
+    });
+
+    expect(update).not.toHaveBeenCalled();
+    expect(commit).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when archivedAt is equal (same Timestamp value, different object instances)", async () => {
+    const { db, update, commit } = fakeDb(["owner-uid"]);
+    const ts = Timestamp.fromMillis(1000);
+    const tsDifferentInstance = Timestamp.fromMillis(1000);
+
+    await syncListRefHandler(db as never, "list-1", {
+      ...BASE_FIELDS,
+      archivedAt: ts,
+    }, {
+      ...BASE_FIELDS,
+      archivedAt: tsDifferentInstance,
     });
 
     expect(update).not.toHaveBeenCalled();
