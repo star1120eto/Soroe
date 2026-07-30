@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { UserListRef } from '@soroe/shared';
 
 import {
-  Banner,
   Button,
   Colors,
   EmptyState,
@@ -33,29 +32,32 @@ export default function ListScreen() {
 
   const [lists, setLists] = useState<UserListRef[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showLimitBanner, setShowLimitBanner] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     return subscribeToUserLists(
       uid,
-      (nextLists) => setLists(nextLists),
+      (nextLists) => {
+        setError(null);
+        setLists(nextLists);
+      },
       () => setError('リストを読み込めませんでした')
     );
-  }, [uid]);
+  }, [uid, retryKey]);
 
   const openCreateFlow = () => {
-    if ((lists?.length ?? 0) >= FREE_ACTIVE_LIST_LIMIT) {
-      setShowLimitBanner(true);
-      return;
-    }
-    setShowLimitBanner(false);
     router.push('/new-list-method');
   };
 
   if (error) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ErrorState title="読み込みに失敗しました" description={error} />
+        <ErrorState
+          title="読み込みに失敗しました"
+          description={error}
+          retryLabel="再試行"
+          onRetry={() => setRetryKey((k) => k + 1)}
+        />
       </SafeAreaView>
     );
   }
@@ -94,13 +96,6 @@ export default function ListScreen() {
             {FREE_ACTIVE_LIST_LIMIT}件中{lists.length}件
           </Text>
         </View>
-
-        {showLimitBanner ? (
-          <Banner
-            message={`Freeプランで作成できるリストは${FREE_ACTIVE_LIST_LIMIT}件までです`}
-            variant="warning"
-          />
-        ) : null}
 
         {lists.map((list) => (
           <TemplateCard

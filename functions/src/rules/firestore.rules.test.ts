@@ -123,6 +123,16 @@ describe("lists/{listId}", () => {
     await assertFails(db(EDITOR).doc(`lists/${LIST_ID}`).update({ name: "変更後" }));
   });
 
+  it("オーナーでも61文字の名前には更新できない", async () => {
+    await assertFails(
+      db(OWNER).doc(`lists/${LIST_ID}`).update({ name: "あ".repeat(61), updatedAt: new Date() })
+    );
+  });
+
+  it("オーナーでも種別は直接変更できない", async () => {
+    await assertFails(db(OWNER).doc(`lists/${LIST_ID}`).update({ type: "task", updatedAt: new Date() }));
+  });
+
   it("オーナーでも所有権は移譲できない", async () => {
     await assertFails(db(OWNER).doc(`lists/${LIST_ID}`).update({ ownerId: OUTSIDER }));
   });

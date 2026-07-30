@@ -1,15 +1,16 @@
 import firestore from '@react-native-firebase/firestore';
 import functions from '@react-native-firebase/functions';
-import type {
-  CreateListInput,
-  CreateListItemInput,
-  CreateListRequest,
-  CreateListResponse,
-  List,
-  ListItem,
-  UpdateListInput,
-  UpdateListItemInput,
-  UserListRef,
+import {
+  createListResponseSchema,
+  type CreateListInput,
+  type CreateListItemInput,
+  type CreateListRequest,
+  type CreateListResponse,
+  type List,
+  type ListItem,
+  type UpdateListInput,
+  type UpdateListItemInput,
+  type UserListRef,
 } from '@soroe/shared';
 
 import { toList, toListItem, toUserListRef } from './converters';
@@ -180,7 +181,10 @@ export function updateList(listId: string, input: Partial<EditableListFields>): 
   if (input.color !== undefined) patch.color = input.color;
   if (input.icon !== undefined) patch.icon = input.icon;
 
-  listsCollection().doc(listId).update(patch);
+  listsCollection()
+    .doc(listId)
+    .update(patch)
+    .catch((error) => console.error('updateList failed', error));
 }
 
 // ---- リスト作成 (Callable Functions、オンライン必須) ----
@@ -193,5 +197,5 @@ export async function createList(
 ): Promise<CreateListResponse> {
   const callable = functions().httpsCallable<CreateListRequest, CreateListResponse>('createList');
   const result = await callable({ ...input, requestId });
-  return result.data;
+  return createListResponseSchema.parse(result.data);
 }

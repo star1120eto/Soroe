@@ -5,8 +5,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createListInputSchema, type List, type ListType } from '@soroe/shared';
 
-import { Banner, Button, Chip, Colors, Input, Spacing, Typography } from '@/design-system';
-import { LIST_COLOR_OPTIONS, LIST_TYPE_OPTIONS, iconForListType } from '@/features/lists/listOptions';
+import { Banner, Button, Chip, Colors, Input, Spacing, Typography, type PhIconName } from '@/design-system';
+import { LIST_COLOR_OPTIONS, LIST_TYPE_OPTIONS } from '@/features/lists/listOptions';
 import { createList, subscribeToList, updateList } from '@/features/lists/ListRepository';
 
 // LIST-03: 作成/編集を1フォームで扱う。listIdが無ければ新規作成、あれば
@@ -19,6 +19,7 @@ export default function NewListScreen() {
   const [requestId] = useState(() => randomUUID());
   const [name, setName] = useState('');
   const [type, setType] = useState<ListType>('shopping');
+  const [icon, setIcon] = useState<PhIconName>(LIST_TYPE_OPTIONS[0].icon);
   const [colorToken, setColorToken] = useState('primary');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export default function NewListScreen() {
         setName(list.name);
         setType(list.type);
         setColorToken(list.color);
+        setIcon(list.icon as PhIconName);
       },
       () => setRequestError('リストを読み込めませんでした')
     );
@@ -46,7 +48,6 @@ export default function NewListScreen() {
     setValidationError(null);
     setRequestError(null);
 
-    const icon = iconForListType(type);
     const parsed = createListInputSchema.safeParse({ name, type, color: colorToken, icon });
     if (!parsed.success) {
       setValidationError('リスト名は1〜60文字で入力してください');
@@ -62,7 +63,7 @@ export default function NewListScreen() {
       }
 
       const created = await createList(parsed.data, requestId);
-      router.replace('/');
+      router.dismissTo('/');
       void created;
     } catch (error) {
       const code = (error as { code?: string }).code;
@@ -99,7 +100,10 @@ export default function NewListScreen() {
                   key={option.type}
                   label={option.label}
                   variant={option.type === type ? 'selected' : 'default'}
-                  onPress={() => setType(option.type)}
+                  onPress={() => {
+                    setType(option.type);
+                    setIcon(option.icon);
+                  }}
                 />
               ))}
             </View>
