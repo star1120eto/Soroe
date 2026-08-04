@@ -37,6 +37,10 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Screen name="invite/[token]" />
       <Stack.Screen name="new-list" options={{ presentation: 'modal', headerShown: true, title: '新しいリスト' }} />
+      <Stack.Screen
+        name="new-list-method"
+        options={{ presentation: 'modal', headerShown: true, title: '作成方法を選ぶ' }}
+      />
     </Stack>
   );
 }

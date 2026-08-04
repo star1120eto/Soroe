@@ -13,3 +13,5 @@ export const ping = onCall(() => pingHandler());
 
 export { requestEmailOtp } from "./emailOtp/requestEmailOtp";
 export { verifyEmailOtp } from "./emailOtp/verifyEmailOtp";
+export { createList } from "./lists/createList";
+export { syncListRef } from "./lists/syncListRef";

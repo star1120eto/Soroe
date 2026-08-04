@@ -103,3 +103,15 @@ export type CreateListItemInput = z.infer<typeof createListItemInputSchema>;
 
 export const updateListItemInputSchema = createListItemInputSchema.partial();
 export type UpdateListItemInput = z.infer<typeof updateListItemInputSchema>;
+
+// Callable Function `createList` の入出力(LIST-002)。requestIdは
+// 同一uid+requestIdの再送を同じ結果にするための冪等性キー。
+export const createListRequestSchema = createListInputSchema.extend({
+  requestId: z.string().min(1),
+});
+export type CreateListRequest = z.infer<typeof createListRequestSchema>;
+
+export const createListResponseSchema = z.object({
+  listId: z.string().min(1),
+});
+export type CreateListResponse = z.infer<typeof createListResponseSchema>;

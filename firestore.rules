@@ -41,7 +41,14 @@ service cloud.firestore {
       // 所有者やアーカイブ状態の変更はFunctions経由に限る。
       allow update: if isOwner(listId) &&
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['name', 'color', 'icon', 'updatedAt']);
+          .hasOnly(['name', 'color', 'icon', 'updatedAt']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 1 &&
+        request.resource.data.name.size() <= 60 &&
+        request.resource.data.color is string &&
+        request.resource.data.color.size() >= 1 &&
+        request.resource.data.icon is string &&
+        request.resource.data.icon.size() >= 1;
 
       // 項目CRUDはオフラインで完結する必要があるためclient writeを許可する。
       match /items/{itemId} {

@@ -9,16 +9,22 @@ type TemplateCardProps = {
   title: string;
   subtitle: string;
   onPress?: () => void;
+  // LIST-002: リストの色選択を反映する場合に渡す。未指定時は従来通り
+  // primarySoft/primaryStrongの組み合わせを使う。
+  accentColor?: string;
 };
 
-export function TemplateCard({ icon, title, subtitle, onPress }: TemplateCardProps) {
+export function TemplateCard({ icon, title, subtitle, onPress, accentColor }: TemplateCardProps) {
+  const iconCircleBackground = accentColor ?? Colors.primarySoft;
+  const iconColor = accentColor ? Colors.surface : Colors.primaryStrong;
+
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}>
-      <View style={styles.iconCircle}>
-        <Icon name={icon} color={Colors.primaryStrong} size={24} />
+      <View style={[styles.iconCircle, { backgroundColor: iconCircleBackground }]}>
+        <Icon name={icon} color={iconColor} size={24} />
       </View>
       <View style={styles.textColumn}>
         <Text style={[Typography.heading, styles.title]}>{title}</Text>
@@ -44,7 +50,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,13 +1,16 @@
 import firestore from '@react-native-firebase/firestore';
 import functions from '@react-native-firebase/functions';
-import type {
-  CreateListInput,
-  CreateListItemInput,
-  List,
-  ListItem,
-  UpdateListInput,
-  UpdateListItemInput,
-  UserListRef,
+import {
+  createListResponseSchema,
+  type CreateListInput,
+  type CreateListItemInput,
+  type CreateListRequest,
+  type CreateListResponse,
+  type List,
+  type ListItem,
+  type UpdateListInput,
+  type UpdateListItemInput,
+  type UserListRef,
 } from '@soroe/shared';
 
 import { toList, toListItem, toUserListRef } from './converters';
@@ -89,7 +92,7 @@ export function subscribeToListItems(
     }, onError);
 }
 
-// ---- 項目CRUD (Rules付きclient write、オフライン可) ----
+// ---- 項目CRUD / リスト編集 (Rules付きclient write、オフライン可) ----
 
 export async function addListItem(
   listId: string,
@@ -167,22 +170,32 @@ export function softDeleteListItem(listId: string, itemId: string): void {
     });
 }
 
-// ---- 権利変更 (Callable Functions、オンライン必須) ----
-// Free上限やEntitlementの原子的判定をクライアント申告に委ねないため、
-// これらはFunctions側の実装(LIST-002/LIST-006)を待つ。
+// リスト自体はowner限定でclientから直接更新できる(firestore.rules L37-44)。
+// typeはRulesが許可しないため対象外(作成後は不変)。denormalizeされた
+// listRefsへの反映はFirestore trigger(functions/src/lists/syncListRef.ts)が行う。
+export type EditableListFields = Pick<UpdateListInput, 'name' | 'color' | 'icon'>;
 
-export async function createList(input: CreateListInput, requestId: string): Promise<{ listId: string }> {
-  const callable = functions().httpsCallable<
-    CreateListInput & { requestId: string },
-    { listId: string }
-  >('createList');
-  const result = await callable({ ...input, requestId });
-  return result.data;
+export function updateList(listId: string, input: Partial<EditableListFields>): void {
+  const patch: Record<string, unknown> = { updatedAt: firestore.FieldValue.serverTimestamp() };
+  if (input.name !== undefined) patch.name = input.name;
+  if (input.color !== undefined) patch.color = input.color;
+  if (input.icon !== undefined) patch.icon = input.icon;
+
+  listsCollection()
+    .doc(listId)
+    .update(patch)
+    .catch((error) => console.error('updateList failed', error));
 }
 
-export async function updateList(listId: string, input: UpdateListInput): Promise<void> {
-  await functions().httpsCallable<{ listId: string } & UpdateListInput, void>('updateList')({
-    listId,
-    ...input,
-  });
+// ---- リスト作成 (Callable Functions、オンライン必須) ----
+// Free上限の原子的判定をクライアント申告に委ねないため、createListだけは
+// Functions側の実装(LIST-002)を経由する。
+
+export async function createList(
+  input: CreateListInput,
+  requestId: string
+): Promise<CreateListResponse> {
+  const callable = functions().httpsCallable<CreateListRequest, CreateListResponse>('createList');
+  const result = await callable({ ...input, requestId });
+  return createListResponseSchema.parse(result.data);
 }

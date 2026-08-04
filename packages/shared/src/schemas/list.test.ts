@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   createListInputSchema,
   createListItemInputSchema,
+  createListRequestSchema,
+  createListResponseSchema,
   listItemSchema,
   listSchema,
   userListRefSchema,
@@ -121,5 +123,41 @@ describe("input schemas", () => {
 
   it("createListItemInputSchema requires only the name", () => {
     expect(() => createListItemInputSchema.parse({ name: "トマト" })).not.toThrow();
+  });
+});
+
+describe("createListRequestSchema", () => {
+  it("requires a non-empty requestId alongside the list fields", () => {
+    const parsed = createListRequestSchema.parse({
+      name: "今週の買い物",
+      type: "shopping",
+      color: "primary",
+      icon: "shopping-cart-simple",
+      requestId: "req-1",
+    });
+    expect(parsed.requestId).toBe("req-1");
+    expect(parsed.name).toBe("今週の買い物");
+  });
+
+  it("rejects an empty requestId", () => {
+    expect(() =>
+      createListRequestSchema.parse({
+        name: "今週の買い物",
+        type: "shopping",
+        color: "primary",
+        icon: "shopping-cart-simple",
+        requestId: "",
+      })
+    ).toThrow();
+  });
+});
+
+describe("createListResponseSchema", () => {
+  it("accepts a listId", () => {
+    expect(() => createListResponseSchema.parse({ listId: "list-1" })).not.toThrow();
+  });
+
+  it("rejects an empty listId", () => {
+    expect(() => createListResponseSchema.parse({ listId: "" })).toThrow();
   });
 });
