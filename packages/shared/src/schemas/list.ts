@@ -70,6 +70,9 @@ export const userListRefSchema = z.object({
   memberCount: z.number().int().positive(),
   updatedAt: z.number().int().positive(),
   archivedAt: z.number().int().positive().nullable(),
+  // LIST-006: 論理削除。archivedAtも同時に立つため、一覧画面の
+  // `archivedAt == null` クエリからは削除済みリストも自動的に除外される。
+  deletedAt: z.number().int().positive().nullable(),
 });
 export type UserListRef = z.infer<typeof userListRefSchema>;
 
@@ -115,3 +118,44 @@ export const createListResponseSchema = z.object({
   listId: z.string().min(1),
 });
 export type CreateListResponse = z.infer<typeof createListResponseSchema>;
+
+// LIST-006: 複製・アーカイブ・復元・削除のCallable Function入出力。
+// 所有権判定と(複製・アーカイブ解除・復元では)Free上限の原子的判定を
+// Functions側に寄せ、client writeでは行わない(firestore.rules参照)。
+export const listIdInputSchema = z.object({
+  listId: z.string().min(1),
+});
+export type ListIdInput = z.infer<typeof listIdInputSchema>;
+
+export const archiveListRequestSchema = listIdInputSchema;
+export type ArchiveListRequest = z.infer<typeof archiveListRequestSchema>;
+
+export const deleteListRequestSchema = listIdInputSchema;
+export type DeleteListRequest = z.infer<typeof deleteListRequestSchema>;
+
+// unarchive/restore/duplicateはFree上限の再判定を伴うため、createListと同様に
+// requestIdで冪等性を確保する。
+export const unarchiveListRequestSchema = listIdInputSchema.extend({
+  requestId: z.string().min(1),
+});
+export type UnarchiveListRequest = z.infer<typeof unarchiveListRequestSchema>;
+
+export const restoreListRequestSchema = listIdInputSchema.extend({
+  requestId: z.string().min(1),
+});
+export type RestoreListRequest = z.infer<typeof restoreListRequestSchema>;
+
+export const duplicateListRequestSchema = listIdInputSchema.extend({
+  requestId: z.string().min(1),
+});
+export type DuplicateListRequest = z.infer<typeof duplicateListRequestSchema>;
+
+export const duplicateListResponseSchema = z.object({
+  listId: z.string().min(1),
+});
+export type DuplicateListResponse = z.infer<typeof duplicateListResponseSchema>;
+
+export const okResponseSchema = z.object({
+  ok: z.literal(true),
+});
+export type OkResponse = z.infer<typeof okResponseSchema>;

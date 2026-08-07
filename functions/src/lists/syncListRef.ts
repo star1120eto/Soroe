@@ -8,6 +8,7 @@ type SyncedFields = {
   color: unknown;
   icon: unknown;
   archivedAt: unknown;
+  deletedAt: unknown;
   updatedAt: unknown;
 };
 
@@ -18,6 +19,7 @@ function pickSyncedFields(data: DocumentData): SyncedFields {
     color: data.color,
     icon: data.icon,
     archivedAt: data.archivedAt,
+    deletedAt: data.deletedAt,
     updatedAt: data.updatedAt,
   };
 }
@@ -38,7 +40,8 @@ function hasSyncedFieldChange(before: SyncedFields, after: SyncedFields): boolea
     before.type !== after.type ||
     before.color !== after.color ||
     before.icon !== after.icon ||
-    !timestampsEqual(before.archivedAt, after.archivedAt)
+    !timestampsEqual(before.archivedAt, after.archivedAt) ||
+    !timestampsEqual(before.deletedAt, after.deletedAt)
   );
 }
 
