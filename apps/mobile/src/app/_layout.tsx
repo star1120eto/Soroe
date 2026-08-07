@@ -41,6 +41,10 @@ function RootNavigator() {
         name="new-list-method"
         options={{ presentation: 'modal', headerShown: true, title: '作成方法を選ぶ' }}
       />
+      {/* titleはlist/[listId].tsx側でStack.Screenを再宣言しリスト名に差し替える */}
+      <Stack.Screen name="list/[listId]" options={{ headerShown: true, title: 'リスト' }} />
+      <Stack.Screen name="item-edit" options={{ presentation: 'modal', headerShown: true, title: '項目を編集' }} />
+      <Stack.Screen name="archived-lists" options={{ headerShown: true, title: 'アーカイブ・削除済み' }} />
     </Stack>
   );
 }
