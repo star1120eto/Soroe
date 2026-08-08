@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  archiveListRequestSchema,
   createListInputSchema,
   createListItemInputSchema,
   createListRequestSchema,
   createListResponseSchema,
+  deleteListRequestSchema,
+  duplicateListRequestSchema,
+  duplicateListResponseSchema,
   listItemSchema,
   listSchema,
+  okResponseSchema,
+  restoreListRequestSchema,
+  unarchiveListRequestSchema,
   userListRefSchema,
 } from "./list";
 
@@ -101,6 +108,7 @@ describe("userListRefSchema", () => {
         memberCount: 1,
         updatedAt: 1,
         archivedAt: null,
+        deletedAt: null,
       })
     ).not.toThrow();
   });
@@ -159,5 +167,31 @@ describe("createListResponseSchema", () => {
 
   it("rejects an empty listId", () => {
     expect(() => createListResponseSchema.parse({ listId: "" })).toThrow();
+  });
+});
+
+describe("LIST-006 request schemas", () => {
+  it("archiveListRequestSchema and deleteListRequestSchema require only a listId", () => {
+    expect(() => archiveListRequestSchema.parse({ listId: "list-1" })).not.toThrow();
+    expect(() => deleteListRequestSchema.parse({ listId: "list-1" })).not.toThrow();
+    expect(() => archiveListRequestSchema.parse({ listId: "" })).toThrow();
+  });
+
+  it.each([unarchiveListRequestSchema, restoreListRequestSchema, duplicateListRequestSchema])(
+    "requires both listId and requestId",
+    (schema) => {
+      expect(() => schema.parse({ listId: "list-1", requestId: "req-1" })).not.toThrow();
+      expect(() => schema.parse({ listId: "list-1" })).toThrow();
+      expect(() => schema.parse({ listId: "list-1", requestId: "" })).toThrow();
+    }
+  );
+
+  it("duplicateListResponseSchema accepts a listId", () => {
+    expect(() => duplicateListResponseSchema.parse({ listId: "list-2" })).not.toThrow();
+  });
+
+  it("okResponseSchema only accepts ok: true", () => {
+    expect(() => okResponseSchema.parse({ ok: true })).not.toThrow();
+    expect(() => okResponseSchema.parse({ ok: false })).toThrow();
   });
 });

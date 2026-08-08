@@ -1,10 +1,12 @@
 import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import {
   listItemSchema,
+  listMemberSchema,
   listSchema,
   userListRefSchema,
   type List,
   type ListItem,
+  type ListMember,
   type UserListRef,
 } from '@soroe/shared';
 
@@ -72,6 +74,16 @@ export function toListItem(id: string, listId: string, data: FirestoreData): Lis
   });
 }
 
+export function toListMember(uid: string, listId: string, data: FirestoreData): ListMember {
+  const now = Date.now();
+  return listMemberSchema.parse({
+    uid,
+    listId,
+    role: data.role,
+    joinedAt: requireMillis(data.joinedAt, now),
+  });
+}
+
 export function toUserListRef(listId: string, data: FirestoreData): UserListRef {
   const now = Date.now();
   return userListRefSchema.parse({
@@ -86,5 +98,6 @@ export function toUserListRef(listId: string, data: FirestoreData): UserListRef 
     memberCount: data.memberCount ?? 1,
     updatedAt: requireMillis(data.updatedAt, now),
     archivedAt: toMillis(data.archivedAt),
+    deletedAt: toMillis(data.deletedAt),
   });
 }

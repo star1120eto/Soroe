@@ -2,18 +2,28 @@ import firestore from '@react-native-firebase/firestore';
 import functions from '@react-native-firebase/functions';
 import {
   createListResponseSchema,
+  duplicateListResponseSchema,
+  okResponseSchema,
+  type ArchiveListRequest,
   type CreateListInput,
   type CreateListItemInput,
   type CreateListRequest,
   type CreateListResponse,
+  type DeleteListRequest,
+  type DuplicateListRequest,
+  type DuplicateListResponse,
   type List,
   type ListItem,
+  type ListMember,
+  type OkResponse,
+  type RestoreListRequest,
+  type UnarchiveListRequest,
   type UpdateListInput,
   type UpdateListItemInput,
   type UserListRef,
 } from '@soroe/shared';
 
-import { toList, toListItem, toUserListRef } from './converters';
+import { toList, toListItem, toListMember, toUserListRef } from './converters';
 
 // Firestoreへの唯一の窓口。soroe-technology-stack-evaluation.md 5章に従い、
 // オフラインで完結してよい項目CRUDだけをclient writeにし、上限・権利・所有権が
@@ -35,6 +45,10 @@ function itemsCollection(listId: string) {
 
 function listRefsCollection(uid: string) {
   return firestore().collection(USERS).doc(uid).collection(LIST_REFS);
+}
+
+function membersCollection(listId: string) {
+  return listsCollection().doc(listId).collection('members');
 }
 
 /** 一覧画面用。全リストの全項目ではなく一覧用documentだけを購読する。 */
@@ -62,6 +76,49 @@ export function subscribeToList(
     .onSnapshot((snapshot) => {
       const data = snapshot.data();
       onChange(data ? toList(snapshot.id, data) : null);
+    }, onError);
+}
+
+/** LIST-006のアーカイブ・ゴミ箱画面用。ownerだけが呼ぶ想定。 */
+export function subscribeToArchivedOrDeletedLists(
+  uid: string,
+  onChange: (lists: UserListRef[]) => void,
+  onError: (error: Error) => void
+): () => void {
+  // "!="は対象フィールド1つだけの不等号条件のため追加の複合indexを要さず、
+  // 暗黙にarchivedAt昇順で返る(該当件数は個人利用規模で小さい想定)。
+  return listRefsCollection(uid)
+    .where('archivedAt', '!=', null)
+    .onSnapshot(
+      (snapshot) => onChange(snapshot.docs.map((doc) => toUserListRef(doc.id, doc.data()))),
+      onError
+    );
+}
+
+/** LIST-004: 担当者選択・表示用にメンバー一覧を購読する。 */
+export function subscribeToListMembers(
+  listId: string,
+  onChange: (members: ListMember[]) => void,
+  onError: (error: Error) => void
+): () => void {
+  return membersCollection(listId).onSnapshot(
+    (snapshot) => onChange(snapshot.docs.map((doc) => toListMember(doc.id, listId, doc.data()))),
+    onError
+  );
+}
+
+/** 項目編集画面用。一覧購読と別に、対象の1件だけを購読する。 */
+export function subscribeToListItem(
+  listId: string,
+  itemId: string,
+  onChange: (item: ListItem | null) => void,
+  onError: (error: Error) => void
+): () => void {
+  return itemsCollection(listId)
+    .doc(itemId)
+    .onSnapshot((snapshot) => {
+      const data = snapshot.data();
+      onChange(data ? toListItem(snapshot.id, listId, data) : null);
     }, onError);
 }
 
@@ -198,4 +255,41 @@ export async function createList(
   const callable = functions().httpsCallable<CreateListRequest, CreateListResponse>('createList');
   const result = await callable({ ...input, requestId });
   return createListResponseSchema.parse(result.data);
+}
+
+// ---- LIST-006: 複製・アーカイブ・復元・削除 (Callable Functions) ----
+// 所有権判定とFree上限の原子的判定をクライアントに持たせないため、
+// createListと同様にすべてFunctions経由にする。
+
+export async function archiveList(listId: string): Promise<OkResponse> {
+  const callable = functions().httpsCallable<ArchiveListRequest, OkResponse>('archiveList');
+  const result = await callable({ listId });
+  return okResponseSchema.parse(result.data);
+}
+
+export async function deleteList(listId: string): Promise<OkResponse> {
+  const callable = functions().httpsCallable<DeleteListRequest, OkResponse>('deleteList');
+  const result = await callable({ listId });
+  return okResponseSchema.parse(result.data);
+}
+
+export async function unarchiveList(listId: string, requestId: string): Promise<OkResponse> {
+  const callable = functions().httpsCallable<UnarchiveListRequest, OkResponse>('unarchiveList');
+  const result = await callable({ listId, requestId });
+  return okResponseSchema.parse(result.data);
+}
+
+export async function restoreList(listId: string, requestId: string): Promise<OkResponse> {
+  const callable = functions().httpsCallable<RestoreListRequest, OkResponse>('restoreList');
+  const result = await callable({ listId, requestId });
+  return okResponseSchema.parse(result.data);
+}
+
+export async function duplicateList(
+  listId: string,
+  requestId: string
+): Promise<DuplicateListResponse> {
+  const callable = functions().httpsCallable<DuplicateListRequest, DuplicateListResponse>('duplicateList');
+  const result = await callable({ listId, requestId });
+  return duplicateListResponseSchema.parse(result.data);
 }
