@@ -1,4 +1,4 @@
-import { FieldValue, getFirestore, Timestamp, type DocumentData } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, Timestamp, type DocumentData, type Firestore } from "firebase-admin/firestore";
 import type { ListType } from "@soroe/shared";
 
 import { isUnderActiveListLimit, type Plan } from "./listLimit";
@@ -249,6 +249,12 @@ export type DuplicateListResult =
  * 複製はオーナーに限らずメンバーなら実行できる。複製先は呼び出し元uidが
  * オーナーの完全に独立したリストになり、共有関係・担当・完了状態は引き継がない。
  */
+// family-checklist-product-design.md「1リストの項目数: 無制限(推奨上限500件、
+// 超過時は警告)」に対応するため、項目の複製だけはtransactionの外で
+// chunked batchに分けて行う(Firestoreのtransactionは1回あたり500書込までで、
+// リスト・メンバー・listRef・requestの4件と合わせると500件超の複製で失敗する)。
+export const ITEM_COPY_CHUNK_SIZE = 400;
+
 export async function duplicateListTransaction(
   uid: string,
   requestId: string,
@@ -262,9 +268,14 @@ export async function duplicateListTransaction(
   const sourceMemberRef = sourceListRef.collection("members").doc(uid);
   const activeListRefsQuery = userRef.collection("listRefs").where("archivedAt", "==", null);
 
-  return db.runTransaction(async (tx) => {
+  let itemsToCopy: DocumentData[] = [];
+  let newListId: string | null = null;
+
+  const result = await db.runTransaction(async (tx) => {
     const requestSnap = await tx.get(requestRef);
     if (requestSnap.exists) {
+      // 冪等な再送。項目複製が前回どこまで進んだかは追跡していないため、
+      // 新規作成はスキップしそのままlistIdを返す(既知の制約)。
       return { status: "ok" as const, listId: requestSnap.data()!.listId as string };
     }
 
@@ -316,12 +327,36 @@ export async function duplicateListTransaction(
       archivedAt: null,
       deletedAt: null,
     });
+    tx.set(requestRef, { listId: newListRef.id, createdAt: now });
 
-    // 完了状態・担当者・期限は元の文脈(共有メンバーや当時の予定)に紐づくため
-    // 引き継がず、名前・数量・単位・カテゴリ・メモ・並び順だけを複製する。
-    for (const itemDoc of itemsSnap.docs) {
-      const item = itemDoc.data();
-      tx.set(newListRef.collection("items").doc(), {
+    itemsToCopy = itemsSnap.docs.map((doc) => doc.data());
+    newListId = newListRef.id;
+    return { status: "ok" as const, listId: newListRef.id };
+  });
+
+  if (result.status === "ok" && newListId) {
+    await copyItemsInChunks(db, newListId, uid, itemsToCopy);
+  }
+
+  return result;
+}
+
+// 完了状態・担当者・期限は元の文脈(共有メンバーや当時の予定)に紐づくため
+// 引き継がず、名前・数量・単位・カテゴリ・メモ・並び順だけを複製する。
+// テストのためexportする(chunk境界の検証にtransactionの模倣までは要らない)。
+export async function copyItemsInChunks(
+  db: Firestore,
+  newListId: string,
+  uid: string,
+  items: DocumentData[]
+): Promise<void> {
+  const itemsCollection = db.collection("lists").doc(newListId).collection("items");
+  const now = FieldValue.serverTimestamp();
+
+  for (let offset = 0; offset < items.length; offset += ITEM_COPY_CHUNK_SIZE) {
+    const batch = db.batch();
+    for (const item of items.slice(offset, offset + ITEM_COPY_CHUNK_SIZE)) {
+      batch.set(itemsCollection.doc(), {
         name: item.name,
         quantity: item.quantity ?? null,
         unit: item.unit ?? null,
@@ -338,8 +373,6 @@ export async function duplicateListTransaction(
         deletedAt: null,
       });
     }
-
-    tx.set(requestRef, { listId: newListRef.id, createdAt: now });
-    return { status: "ok" as const, listId: newListRef.id };
-  });
+    await batch.commit();
+  }
 }

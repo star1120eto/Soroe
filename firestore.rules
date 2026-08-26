@@ -22,8 +22,8 @@ service cloud.firestore {
     // LIST-05: アーカイブ中・削除済みのリストは読み取り専用にする
     // (再開にはアクティブ化/復元がFunctions経由で必要)。
     function isListActive(listId) {
-      return get(/databases/$(database)/documents/lists/$(listId)).data.archivedAt == null &&
-        get(/databases/$(database)/documents/lists/$(listId)).data.deletedAt == null;
+      let list = get(/databases/$(database)/documents/lists/$(listId)).data;
+      return list.archivedAt == null && list.deletedAt == null;
     }
 
     // AUTH-001: 本人のみusers/{uid}を読み書きできる。

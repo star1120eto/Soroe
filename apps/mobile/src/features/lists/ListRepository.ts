@@ -118,7 +118,11 @@ export function subscribeToListItem(
     .doc(itemId)
     .onSnapshot((snapshot) => {
       const data = snapshot.data();
-      onChange(data ? toListItem(snapshot.id, listId, data) : null);
+      // subscribeToListItemsと同様、論理削除された項目は「存在しない」扱いに
+      // する。他端末で削除された項目を編集画面が開いたまま保存可能な状態に
+      // し続けないため。
+      const item = data && data.deletedAt === null ? toListItem(snapshot.id, listId, data) : null;
+      onChange(item);
     }, onError);
 }
 

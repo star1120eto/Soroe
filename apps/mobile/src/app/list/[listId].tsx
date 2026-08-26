@@ -48,6 +48,7 @@ import {
   filterListItems,
   formatItemMeta,
   hasDuplicateItemName,
+  isItemFilterActive,
   moveItemSortOrder,
   nextAppendSortOrder,
   uniqueCategories,
@@ -126,10 +127,9 @@ export default function ListDetailScreen() {
   // アーカイブ中は読み取り専用(LIST-05)。firestore.rulesでも項目write全般を
   // 拒否しているため、これはUI上の案内であり実際の防御はサーバー側にある。
   const isReadOnly = list != null && list.archivedAt !== null;
-  // 検索・カテゴリ・担当者で絞っている間は、可視順とsortOrderの隣接関係が
-  // 一致しなくなるため手動並べ替えを無効にする。
-  const canReorder =
-    !isReadOnly && filters.category === null && filters.assigneeId === null && filters.search.trim() === '';
+  // 未完了のみ・検索・カテゴリ・担当者のいずれかで絞っている間は、可視順と
+  // sortOrderの隣接関係が一致しなくなるため手動並べ替えを無効にする。
+  const canReorder = !isReadOnly && !isItemFilterActive(filters);
 
   // list/[listId]は認証済みグループ(app)の外にも登録されているため
   // (モーダル遷移用)、Universal Link等で未認証状態のまま開かれ得る。
