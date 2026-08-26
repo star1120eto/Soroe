@@ -13,6 +13,9 @@ export async function archiveListHandler(input: unknown, uid: string): Promise<O
   if (result === "forbidden") {
     throw new HttpsError("permission-denied", "オーナーだけがアーカイブできます");
   }
+  if (result === "already-deleted") {
+    throw new HttpsError("failed-precondition", "削除済みのリストはアーカイブできません");
+  }
 
   return { ok: true };
 }

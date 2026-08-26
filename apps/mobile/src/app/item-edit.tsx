@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,7 +45,6 @@ export default function ItemEditScreen() {
   const router = useRouter();
   const { listId, itemId } = useLocalSearchParams<{ listId: string; itemId: string }>();
   const { profile } = useSession();
-  const uid = profile!.uid;
 
   const [list, setList] = useState<List | null | undefined>(undefined);
   const [item, setItem] = useState<ListItem | null | undefined>(undefined);
@@ -89,6 +88,14 @@ export default function ItemEditScreen() {
 
   const showQuantityUnit = list?.type === 'shopping' || list?.type === 'packing';
   const showDueDate = list?.type === 'task';
+
+  // item-editも認証済みグループ(app)の外にモーダルとして登録しているため、
+  // Universal Link等で未認証状態のまま開かれ得る。フックは全て上で
+  // 呼び終えているので、ここでのみ早期returnする。
+  if (!profile) {
+    return <Redirect href="/" />;
+  }
+  const uid = profile.uid;
 
   const applySave = () => {
     if (!item) {

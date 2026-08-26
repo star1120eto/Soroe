@@ -1,5 +1,5 @@
 import { randomUUID } from 'expo-crypto';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +17,7 @@ import { useSession } from '@/features/session/SessionProvider';
 export default function ArchivedListsScreen() {
   const router = useRouter();
   const { profile } = useSession();
-  const uid = profile!.uid;
+  const uid = profile?.uid ?? null;
 
   const [lists, setLists] = useState<UserListRef[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +28,9 @@ export default function ArchivedListsScreen() {
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
+    if (!uid) {
+      return;
+    }
     return subscribeToArchivedOrDeletedLists(
       uid,
       (next) => {
@@ -37,6 +40,13 @@ export default function ArchivedListsScreen() {
       () => setError('読み込めませんでした')
     );
   }, [uid, retryKey]);
+
+  // archived-listsも認証済みグループ(app)の外に登録しているため、
+  // Universal Link等で未認証状態のまま開かれ得る。フックは全て上で
+  // 呼び終えているので、ここでのみ早期returnする。
+  if (!profile) {
+    return <Redirect href="/" />;
+  }
 
   const runAction = async (action: () => Promise<unknown>) => {
     setActionError(null);

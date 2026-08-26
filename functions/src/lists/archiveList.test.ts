@@ -33,6 +33,14 @@ describe("archiveListHandler", () => {
     });
   });
 
+  it("throws failed-precondition (not permission-denied) when the list is already deleted", async () => {
+    vi.mocked(listStore.archiveListTransaction).mockResolvedValue("already-deleted");
+
+    await expect(archiveListHandler({ listId: "list-1" }, "uid-1")).rejects.toMatchObject({
+      code: "failed-precondition",
+    });
+  });
+
   it("rejects an empty listId before touching Firestore", async () => {
     await expect(archiveListHandler({ listId: "" }, "uid-1")).rejects.toThrow();
     expect(listStore.archiveListTransaction).not.toHaveBeenCalled();

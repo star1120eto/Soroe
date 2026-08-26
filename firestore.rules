@@ -19,6 +19,13 @@ service cloud.firestore {
       return isMember(listId) && memberDoc(listId).data.role == 'owner';
     }
 
+    // LIST-05: アーカイブ中・削除済みのリストは読み取り専用にする
+    // (再開にはアクティブ化/復元がFunctions経由で必要)。
+    function isListActive(listId) {
+      return get(/databases/$(database)/documents/lists/$(listId)).data.archivedAt == null &&
+        get(/databases/$(database)/documents/lists/$(listId)).data.deletedAt == null;
+    }
+
     // AUTH-001: 本人のみusers/{uid}を読み書きできる。
     match /users/{uid} {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
@@ -38,8 +45,10 @@ service cloud.firestore {
       allow read: if isMember(listId);
       allow create, delete: if false;
       // 名前・色・アイコンなど表示用の情報だけをオーナーが直接更新できる。
-      // 所有者やアーカイブ状態の変更はFunctions経由に限る。
+      // 所有者やアーカイブ状態の変更はFunctions経由に限る。アーカイブ中は
+      // 読み取り専用のため、resource.data(更新前の値)で判定する。
       allow update: if isOwner(listId) &&
+        resource.data.archivedAt == null &&
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['name', 'color', 'icon', 'updatedAt']) &&
         request.resource.data.name is string &&
@@ -51,9 +60,11 @@ service cloud.firestore {
         request.resource.data.icon.size() >= 1;
 
       // 項目CRUDはオフラインで完結する必要があるためclient writeを許可する。
+      // ただしアーカイブ中・削除済みのリストは読み取り専用にする(LIST-05)。
       match /items/{itemId} {
         allow read: if isMember(listId);
         allow create: if isMember(listId) &&
+          isListActive(listId) &&
           request.resource.data.createdBy == request.auth.uid &&
           request.resource.data.name is string &&
           request.resource.data.name.size() > 0 &&
@@ -61,6 +72,7 @@ service cloud.firestore {
           request.resource.data.deletedAt == null;
         // 論理削除で運用するため物理削除は許可しない(30日後にサーバーが消す)。
         allow update: if isMember(listId) &&
+          isListActive(listId) &&
           request.resource.data.createdBy == resource.data.createdBy;
         allow delete: if false;
       }

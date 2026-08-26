@@ -84,7 +84,7 @@ export async function createListTransaction(
 // 一つのtransactionにまとめる。firestore.rulesはarchivedAt/deletedAtの
 // client直接更新を拒否しているため、これらはAdmin SDK経由に限られる。
 
-export type OwnerActionResult = "ok" | "not-found" | "forbidden";
+export type OwnerActionResult = "ok" | "not-found" | "forbidden" | "already-deleted";
 
 /** アーカイブはオーナーのみ、削除済みリストには実行できない(LIST-05)。 */
 export async function archiveListTransaction(uid: string, listId: string): Promise<OwnerActionResult> {
@@ -101,7 +101,9 @@ export async function archiveListTransaction(uid: string, listId: string): Promi
       return "forbidden";
     }
     if (data.deletedAt !== null) {
-      return "forbidden";
+      // 権限は問題ないが対象が既に削除済み。「オーナーだけが実行できます」
+      // という誤った理由を返さないよう、forbiddenとは別のresultにする。
+      return "already-deleted";
     }
     if (data.archivedAt !== null) {
       return "ok"; // 既にアーカイブ済み。再送に対して冪等。

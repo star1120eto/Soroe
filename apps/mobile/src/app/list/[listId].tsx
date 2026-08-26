@@ -1,5 +1,5 @@
 import { randomUUID } from 'expo-crypto';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -66,7 +66,6 @@ export default function ListDetailScreen() {
   const router = useRouter();
   const { listId } = useLocalSearchParams<{ listId: string }>();
   const { profile } = useSession();
-  const uid = profile!.uid;
 
   const [list, setList] = useState<List | null | undefined>(undefined);
   const [listError, setListError] = useState<string | null>(null);
@@ -117,19 +116,31 @@ export default function ListDetailScreen() {
   }, [listId]);
 
   const items = itemsSnapshot?.items ?? EMPTY_ITEMS;
-  const isOwner = list != null && list.ownerId === uid;
+  const isOwner = list != null && profile != null && list.ownerId === profile.uid;
   const categories = useMemo(() => uniqueCategories(items), [items]);
   const filteredItems = useMemo(() => filterListItems(items, filters), [items, filters]);
   const sections = useMemo(
     () => buildItemSections(filteredItems, filters.onlyIncomplete),
     [filteredItems, filters.onlyIncomplete]
   );
+  // アーカイブ中は読み取り専用(LIST-05)。firestore.rulesでも項目write全般を
+  // 拒否しているため、これはUI上の案内であり実際の防御はサーバー側にある。
+  const isReadOnly = list != null && list.archivedAt !== null;
   // 検索・カテゴリ・担当者で絞っている間は、可視順とsortOrderの隣接関係が
   // 一致しなくなるため手動並べ替えを無効にする。
-  const canReorder = filters.category === null && filters.assigneeId === null && filters.search.trim() === '';
+  const canReorder =
+    !isReadOnly && filters.category === null && filters.assigneeId === null && filters.search.trim() === '';
+
+  // list/[listId]は認証済みグループ(app)の外にも登録されているため
+  // (モーダル遷移用)、Universal Link等で未認証状態のまま開かれ得る。
+  // フックは全て上で呼び終えているので、ここでのみ早期returnする。
+  if (!profile) {
+    return <Redirect href="/" />;
+  }
+  const uid = profile.uid;
 
   const submitQuickAdd = () => {
-    if (!list || quickAddText.trim() === '') {
+    if (!list || isReadOnly || quickAddText.trim() === '') {
       return;
     }
     const parsed = parseQuickAddInput(quickAddText);
@@ -146,14 +157,14 @@ export default function ListDetailScreen() {
   };
 
   const toggleComplete = (item: ListItem) => {
-    if (!list) {
+    if (!list || isReadOnly) {
       return;
     }
     setListItemCompletion(list.id, item.id, uid, item.completedAt === null);
   };
 
   const moveReorderingItem = (direction: 'up' | 'down') => {
-    if (!list || !reorderItemId) {
+    if (!list || !reorderItemId || isReadOnly) {
       return;
     }
     const newSortOrder = moveItemSortOrder(items, reorderItemId, direction);
@@ -164,8 +175,8 @@ export default function ListDetailScreen() {
   };
 
   const openItemEdit = (item: ListItem) => {
-    if (reorderItemId) {
-      return; // 並べ替え中の誤タップでの遷移を防ぐ
+    if (reorderItemId || isReadOnly) {
+      return; // 並べ替え中の誤タップでの遷移を防ぐ。アーカイブ中は読み取り専用。
     }
     router.push({ pathname: '/item-edit', params: { listId: list!.id, itemId: item.id } });
   };
@@ -279,6 +290,9 @@ export default function ListDetailScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}>
         <ScrollView contentContainerStyle={styles.content}>
           {actionError ? <Banner message={actionError} variant="danger" /> : null}
+          {isReadOnly ? (
+            <Banner message="アーカイブ中のため読み取り専用です。編集するにはアクティブに戻してください。" variant="warning" />
+          ) : null}
           {itemsSnapshot.hasPendingWrites ? <Banner message="未同期の変更があります" variant="info" /> : null}
           {duplicateWarning ? <Banner message={duplicateWarning} variant="warning" /> : null}
 
@@ -340,7 +354,11 @@ export default function ListDetailScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={item.name}>
                     <View style={styles.itemRow}>
-                      <Checkbox checked={item.completedAt !== null} onChange={() => toggleComplete(item)} />
+                      <Checkbox
+                        checked={item.completedAt !== null}
+                        onChange={() => toggleComplete(item)}
+                        disabled={isReadOnly}
+                      />
                       <Text
                         style={[
                           Typography.body,
@@ -388,6 +406,7 @@ export default function ListDetailScreen() {
           )}
         </ScrollView>
 
+        {isReadOnly ? null : (
         <View style={styles.quickAddBar}>
           <TextInput
             ref={quickAddRef}
@@ -410,6 +429,7 @@ export default function ListDetailScreen() {
             <Icon name="plus" color={Colors.surface} size={20} />
           </Pressable>
         </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
