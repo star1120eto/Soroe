@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { purgeExpiredDeletedListsHandler } from "./purgeExpiredDeletedLists";
 
@@ -6,13 +6,29 @@ type FakeDbConfig = {
   expiredListIds: string[];
   itemsByList?: Record<string, string[]>;
   membersByList?: Record<string, string[]>;
+  // このリストのbatch.commit()だけを失敗させ、他のリストが引き続き
+  // 処理されることを確認するためのテスト用フック。
+  failingListIds?: string[];
 };
 
-function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {} }: FakeDbConfig) {
+function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {}, failingListIds = [] }: FakeDbConfig) {
   const deleted: unknown[] = [];
-  const batchDelete = vi.fn((ref: unknown) => deleted.push(ref));
-  const commit = vi.fn().mockResolvedValue(undefined);
-  const batch = vi.fn(() => ({ delete: batchDelete, commit }));
+  let pendingForCurrentBatch: { path: string }[] = [];
+  const batchDelete = vi.fn((ref: { path: string }) => pendingForCurrentBatch.push(ref));
+  const commit = vi.fn(() => {
+    const failing = failingListIds.find((id) =>
+      pendingForCurrentBatch.some((ref) => ref.path === `lists/${id}`)
+    );
+    if (failing) {
+      return Promise.reject(new Error(`simulated failure for ${failing}`));
+    }
+    deleted.push(...pendingForCurrentBatch);
+    return Promise.resolve(undefined);
+  });
+  const batch = vi.fn(() => {
+    pendingForCurrentBatch = [];
+    return { delete: batchDelete, commit };
+  });
 
   function listDoc(listId: string) {
     const ref = { path: `lists/${listId}` };
@@ -72,6 +88,10 @@ function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {} }: FakeDb
 }
 
 describe("purgeExpiredDeletedListsHandler", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("does nothing when no list is past the retention window", async () => {
     const { db, deleted, commit } = fakeDb({ expiredListIds: [] });
 
@@ -110,5 +130,22 @@ describe("purgeExpiredDeletedListsHandler", () => {
 
     expect(result).toEqual({ purgedCount: 2 });
     expect(commit).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps purging the remaining lists when one list's purge fails", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { db, deleted } = fakeDb({
+      expiredListIds: ["list-1", "list-2"],
+      membersByList: { "list-1": ["uid-1"], "list-2": ["uid-2"] },
+      failingListIds: ["list-1"],
+    });
+
+    const result = await purgeExpiredDeletedListsHandler(db as never, 1_000_000);
+
+    // list-1の失敗はカウントされず、list-2だけ物理削除が完了する。
+    expect(result).toEqual({ purgedCount: 1 });
+    expect(deleted).toContainEqual(expect.objectContaining({ path: "lists/list-2" }));
+    expect(deleted).not.toContainEqual(expect.objectContaining({ path: "lists/list-1" }));
+    expect(consoleErrorSpy).toHaveBeenCalledOnce();
   });
 });

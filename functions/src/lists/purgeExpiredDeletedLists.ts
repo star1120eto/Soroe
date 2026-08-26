@@ -35,11 +35,19 @@ export async function purgeExpiredDeletedListsHandler(db: Db, nowMillis: number)
   const cutoff = Timestamp.fromMillis(retentionCutoffMillis(nowMillis));
   const expiredSnap = await db.collection("lists").where("deletedAt", "<=", cutoff).get();
 
+  let purgedCount = 0;
   for (const listDoc of expiredSnap.docs) {
-    await purgeList(db, listDoc.id);
+    try {
+      await purgeList(db, listDoc.id);
+      purgedCount += 1;
+    } catch (error) {
+      // 1件が異常に大きい(500件超のitems/members)等で失敗しても、他の期限切れ
+      // リストの物理削除を止めない。失敗分は翌日の実行で再試行される。
+      console.error(`purgeExpiredDeletedLists: failed to purge list ${listDoc.id}`, error);
+    }
   }
 
-  return { purgedCount: expiredSnap.docs.length };
+  return { purgedCount };
 }
 
 export const purgeExpiredDeletedLists = onSchedule("every 24 hours", async () => {

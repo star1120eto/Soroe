@@ -203,7 +203,6 @@ export default function ListDetailScreen() {
       return;
     }
     const buttons: AlertButton[] = [
-      { text: 'リストを編集', onPress: () => router.push({ pathname: '/new-list', params: { listId: list.id } }) },
       {
         text: '複製する',
         onPress: () =>
@@ -217,6 +216,13 @@ export default function ListDetailScreen() {
       },
     ];
     if (isOwner) {
+      // リスト名・色・アイコンの直接更新はfirestore.rulesでオーナーのみに
+      // 限定している(EPIC-04のSHARE実装まではeditorも保有者=自分のみだが、
+      // 将来共有が増えても非オーナーの編集が黙って失敗しないようにする)。
+      buttons.unshift({
+        text: 'リストを編集',
+        onPress: () => router.push({ pathname: '/new-list', params: { listId: list.id } }),
+      });
       buttons.push({
         text: 'アーカイブする',
         onPress: () => runOwnerAction(() => archiveList(list.id), () => router.back()),
