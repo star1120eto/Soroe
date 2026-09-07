@@ -9,6 +9,7 @@ const BASE_FIELDS = {
   color: "primary",
   icon: "shopping-cart-simple",
   archivedAt: null,
+  deletedAt: null,
   updatedAt: "TIMESTAMP_1",
 };
 
@@ -78,6 +79,21 @@ describe("syncListRefHandler", () => {
 
     expect(update).not.toHaveBeenCalled();
     expect(commit).not.toHaveBeenCalled();
+  });
+
+  it("propagates a deletedAt change (LIST-006) to every member's listRef", async () => {
+    const { db, update, commit } = fakeDb(["owner-uid"]);
+
+    await syncListRefHandler(db as never, "list-1", BASE_FIELDS, {
+      ...BASE_FIELDS,
+      archivedAt: "TIMESTAMP_2",
+      deletedAt: "TIMESTAMP_2",
+      updatedAt: "TIMESTAMP_2",
+    });
+
+    expect(update).toHaveBeenCalledOnce();
+    const [, patch] = update.mock.calls[0];
+    expect(patch).toMatchObject({ deletedAt: "TIMESTAMP_2" });
   });
 
   it("does nothing when archivedAt is equal (same Timestamp value, different object instances)", async () => {

@@ -104,10 +104,18 @@ export default function ListScreen() {
             title={list.name}
             subtitle={summarize(list)}
             accentColor={colorValueForToken(list.color)}
+            onPress={() => router.push(`/list/${list.listId}`)}
           />
         ))}
 
         <Button label="リストを追加" onPress={openCreateFlow} variant="secondary" />
+        {/* LIST-006: アーカイブ・削除済みはオーナー操作の対象になるため、
+            一覧の主動線から離れた末尾のテキストリンクに留める。 */}
+        <Button
+          label="アーカイブ・削除済みを見る"
+          onPress={() => router.push('/archived-lists')}
+          variant="text"
+        />
       </View>
     </SafeAreaView>
   );

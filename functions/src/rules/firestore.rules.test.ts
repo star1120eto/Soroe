@@ -144,6 +144,15 @@ describe("lists/{listId}", () => {
   it("clientからは削除できない", async () => {
     await assertFails(db(OWNER).doc(`lists/${LIST_ID}`).delete());
   });
+
+  it("アーカイブ中は読み取り専用でオーナーでも表示情報を更新できない(LIST-05)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc(`lists/${LIST_ID}`).update({ archivedAt: new Date() });
+    });
+    await assertFails(
+      db(OWNER).doc(`lists/${LIST_ID}`).update({ name: "変更後", updatedAt: new Date() })
+    );
+  });
 });
 
 describe("lists/{listId}/items", () => {
@@ -216,6 +225,31 @@ describe("lists/{listId}/items", () => {
 
   it("復元不能な物理削除はできない", async () => {
     await assertFails(db(OWNER).doc(`lists/${LIST_ID}/items/item-1`).delete());
+  });
+
+  it("アーカイブ中のリストには項目を追加できない(LIST-05)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc(`lists/${LIST_ID}`).update({ archivedAt: new Date() });
+    });
+    await assertFails(db(EDITOR).doc(`lists/${LIST_ID}/items/item-2`).set(validItem));
+  });
+
+  it("アーカイブ中のリストの項目は完了・編集できない(LIST-05)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc(`lists/${LIST_ID}`).update({ archivedAt: new Date() });
+    });
+    await assertFails(
+      db(OWNER)
+        .doc(`lists/${LIST_ID}/items/item-1`)
+        .update({ completedAt: new Date(), completedBy: OWNER, updatedAt: new Date() })
+    );
+  });
+
+  it("削除済みのリストには項目を追加できない(LIST-05)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc(`lists/${LIST_ID}`).update({ deletedAt: new Date() });
+    });
+    await assertFails(db(EDITOR).doc(`lists/${LIST_ID}/items/item-2`).set(validItem));
   });
 });
 

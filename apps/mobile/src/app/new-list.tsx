@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createListInputSchema, type List, type ListType } from '@soroe/shared';
 
 import { Banner, Button, Chip, Colors, Input, Spacing, Typography, type PhIconName } from '@/design-system';
+import { describeListActionError } from '@/features/lists/listActionErrors';
 import { LIST_COLOR_OPTIONS, LIST_TYPE_OPTIONS } from '@/features/lists/listOptions';
 import { createList, subscribeToList, updateList } from '@/features/lists/ListRepository';
 
@@ -66,12 +67,7 @@ export default function NewListScreen() {
       router.dismissTo('/');
       void created;
     } catch (error) {
-      const code = (error as { code?: string }).code;
-      setRequestError(
-        code === 'resource-exhausted'
-          ? 'Freeプランで作成できるリストは3件までです'
-          : '保存できませんでした。時間をおいてお試しください'
-      );
+      setRequestError(describeListActionError(error));
     } finally {
       setIsSubmitting(false);
     }

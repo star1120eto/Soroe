@@ -35,6 +35,10 @@ const ICON_NAMES = [
   'tray',
   'dots-three',
   'magic-wand',
+  // LIST-005: リスト詳細の手動並べ替えUI用。
+  'caret-up',
+  'caret-down',
+  'x',
 ];
 
 const PATH_D_PATTERN = /\sd="([^"]+)"/g;
@@ -72,6 +76,10 @@ ${iconRecordLiteral}
 } as const;
 
 export type PhIconName = keyof typeof phIconPaths;
+
+export function isPhIconName(value: string): value is PhIconName {
+  return value in phIconPaths;
+}
 `;
 
 const outFile = path.join(
