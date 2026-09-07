@@ -181,7 +181,10 @@ export default function ListDetailScreen() {
   };
 
   const openItemEdit = (item: ListItem) => {
-    if (reorderItemId || isReadOnly) {
+    // reorderItemId(生の状態)ではなくisReorderingで見る。フィルターで
+    // canReorderがfalseになった後もreorderItemIdだけ残ると、並べ替え
+    // ボタンは消えるのに項目タップだけ塞がったままになってしまうため。
+    if (isReordering || isReadOnly) {
       return; // 並べ替え中の誤タップでの遷移を防ぐ。アーカイブ中は読み取り専用。
     }
     router.push({ pathname: '/item-edit', params: { listId: list!.id, itemId: item.id } });
@@ -232,10 +235,13 @@ export default function ListDetailScreen() {
           ),
       },
     ];
-    if (isOwner) {
+    if (isOwner && !isReadOnly) {
       // リスト名・色・アイコンの直接更新はfirestore.rulesでオーナーのみに
       // 限定している(EPIC-04のSHARE実装まではeditorも保有者=自分のみだが、
       // 将来共有が増えても非オーナーの編集が黙って失敗しないようにする)。
+      // アーカイブ中はRules側もresource.data.archivedAt==nullを要求して
+      // おり(LIST-05の読み取り専用)、この操作を出しても保存が黙って
+      // 拒否されるだけなのでメニューからも外す。
       buttons.unshift({
         text: 'リストを編集',
         onPress: () => router.push({ pathname: '/new-list', params: { listId: list.id } }),
@@ -351,7 +357,9 @@ export default function ListDetailScreen() {
             sections.map((section) => (
               <View key={section.title ?? '__uncategorized__'} style={styles.section}>
                 {section.title ? <Text style={[Typography.label, styles.sectionTitle]}>{section.title}</Text> : null}
-                {section.items.map((item) => (
+                {section.items.map((item) => {
+                  const meta = formatItemMeta(item, uid);
+                  return (
                   <Pressable
                     key={item.id}
                     onPress={() => openItemEdit(item)}
@@ -373,9 +381,7 @@ export default function ListDetailScreen() {
                         ]}>
                         {item.name}
                       </Text>
-                      {formatItemMeta(item, uid) ? (
-                        <Text style={[Typography.caption, styles.itemMeta]}>{formatItemMeta(item, uid)}</Text>
-                      ) : null}
+                      {meta ? <Text style={[Typography.caption, styles.itemMeta]}>{meta}</Text> : null}
                     </View>
                     {isReordering && reorderItemId === item.id ? (
                       <View style={styles.reorderControls}>
@@ -406,7 +412,8 @@ export default function ListDetailScreen() {
                       </View>
                     ) : null}
                   </Pressable>
-                ))}
+                  );
+                })}
               </View>
             ))
           )}
