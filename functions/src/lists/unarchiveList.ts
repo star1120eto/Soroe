@@ -16,6 +16,9 @@ export async function unarchiveListHandler(input: unknown, uid: string): Promise
   if (result.status === "forbidden") {
     throw new HttpsError("permission-denied", "オーナーだけがアーカイブを解除できます");
   }
+  if (result.status === "already-deleted") {
+    throw new HttpsError("failed-precondition", "削除済みのリストはアーカイブを解除できません");
+  }
   if (result.status === "limit-reached") {
     throw new HttpsError("resource-exhausted", "Freeプランで利用できるリストは3件までです");
   }

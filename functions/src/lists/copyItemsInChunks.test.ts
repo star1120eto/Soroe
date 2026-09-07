@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { copyItemsInChunks, ITEM_COPY_CHUNK_SIZE } from "./listStore";
+import { FIRESTORE_BATCH_CHUNK_SIZE } from "./constants";
+import { copyItemsInChunks } from "./listStore";
 
 function fakeDb() {
   const committedSets: { path: string; data: unknown }[] = [];
@@ -73,12 +74,12 @@ describe("copyItemsInChunks", () => {
 
   it("splits into multiple batches when the item count exceeds the chunk size", async () => {
     const { db, committedSets, commitCallSizes } = fakeDb();
-    const items = Array.from({ length: ITEM_COPY_CHUNK_SIZE + 1 }, (_, i) => sourceItem({ sortOrder: i }));
+    const items = Array.from({ length: FIRESTORE_BATCH_CHUNK_SIZE + 1 }, (_, i) => sourceItem({ sortOrder: i }));
 
     await copyItemsInChunks(db as never, "new-list", "uid-1", items);
 
-    expect(commitCallSizes).toEqual([ITEM_COPY_CHUNK_SIZE, 1]);
-    expect(committedSets).toHaveLength(ITEM_COPY_CHUNK_SIZE + 1);
+    expect(commitCallSizes).toEqual([FIRESTORE_BATCH_CHUNK_SIZE, 1]);
+    expect(committedSets).toHaveLength(FIRESTORE_BATCH_CHUNK_SIZE + 1);
   });
 
   it("resets completion, assignee and due date but keeps name/quantity/unit/category/note/sortOrder", async () => {

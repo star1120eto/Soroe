@@ -1,6 +1,7 @@
 import { FieldValue, getFirestore, Timestamp, type DocumentData, type Firestore } from "firebase-admin/firestore";
 import type { ListType } from "@soroe/shared";
 
+import { FIRESTORE_BATCH_CHUNK_SIZE } from "./constants";
 import { isUnderActiveListLimit, type Plan } from "./listLimit";
 import { isWithinRestoreWindow } from "./retention";
 
@@ -146,10 +147,11 @@ export type ReactivateListResult =
   | { status: "ok" }
   | { status: "not-found" }
   | { status: "forbidden" }
+  | { status: "already-deleted" }
   | { status: "expired" }
   | { status: "limit-reached" };
 
-type ReactivateEligibility = "ok" | "already-active" | "forbidden" | "expired";
+type ReactivateEligibility = "ok" | "already-active" | "forbidden" | "already-deleted" | "expired";
 
 /**
  * アーカイブ解除・復元の共通処理。requestIdの冪等性とFree上限の原子的判定を行う。
@@ -213,7 +215,10 @@ export function unarchiveListTransaction(
 ): Promise<ReactivateListResult> {
   return reactivateListTransaction(uid, requestId, listId, "unarchiveListRequests", plan, (data) => {
     if (data.deletedAt !== null) {
-      return "forbidden"; // 削除済みはunarchiveでなくrestoreの対象
+      // 削除済みはunarchiveでなくrestoreの対象。権限は問題ないため、
+      // 「オーナーだけが実行できます」という誤った理由を返さないよう
+      // forbiddenとは別のresultにする(archiveListTransactionと同じ理由)。
+      return "already-deleted";
     }
     if (data.archivedAt === null) {
       return "already-active";
@@ -253,8 +258,6 @@ export type DuplicateListResult =
 // 超過時は警告)」に対応するため、項目の複製だけはtransactionの外で
 // chunked batchに分けて行う(Firestoreのtransactionは1回あたり500書込までで、
 // リスト・メンバー・listRef・requestの4件と合わせると500件超の複製で失敗する)。
-export const ITEM_COPY_CHUNK_SIZE = 400;
-
 export async function duplicateListTransaction(
   uid: string,
   requestId: string,
@@ -353,9 +356,9 @@ export async function copyItemsInChunks(
   const itemsCollection = db.collection("lists").doc(newListId).collection("items");
   const now = FieldValue.serverTimestamp();
 
-  for (let offset = 0; offset < items.length; offset += ITEM_COPY_CHUNK_SIZE) {
+  for (let offset = 0; offset < items.length; offset += FIRESTORE_BATCH_CHUNK_SIZE) {
     const batch = db.batch();
-    for (const item of items.slice(offset, offset + ITEM_COPY_CHUNK_SIZE)) {
+    for (const item of items.slice(offset, offset + FIRESTORE_BATCH_CHUNK_SIZE)) {
       batch.set(itemsCollection.doc(), {
         name: item.name,
         quantity: item.quantity ?? null,

@@ -2,10 +2,15 @@ import type { Firestore } from "firebase-admin/firestore";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 
+import { FIRESTORE_BATCH_CHUNK_SIZE } from "./constants";
 import { retentionCutoffMillis } from "./retention";
 
 type Db = Pick<Firestore, "collection" | "batch">;
 
+// アーカイブ・削除の運用上限(family-checklist-product-design.md「1リスト
+// 推奨上限500件」)に近いリストは、items+members+listRefs+リスト本体自体が
+// 500件を超え得るため、1回のWriteBatchに収めずchunkに分けて削除する
+// (duplicateListTransaction/copyItemsInChunksと同じ理由)。
 async function purgeList(db: Db, listId: string): Promise<void> {
   const listRef = db.collection("lists").doc(listId);
   const [itemsSnap, membersSnap] = await Promise.all([
@@ -13,18 +18,24 @@ async function purgeList(db: Db, listId: string): Promise<void> {
     listRef.collection("members").get(),
   ]);
 
-  const batch = db.batch();
-  for (const itemDoc of itemsSnap.docs) {
-    batch.delete(itemDoc.ref);
+  const refsToDelete = [
+    ...itemsSnap.docs.map((doc) => doc.ref),
+    ...membersSnap.docs.flatMap((memberDoc) => [
+      memberDoc.ref,
+      // 削除済みリストは全メンバーから非表示にしているが(LIST-05)、
+      // listRefドキュメント自体はここで初めて消える。
+      db.collection("users").doc(memberDoc.id).collection("listRefs").doc(listId),
+    ]),
+    listRef,
+  ];
+
+  for (let offset = 0; offset < refsToDelete.length; offset += FIRESTORE_BATCH_CHUNK_SIZE) {
+    const batch = db.batch();
+    for (const ref of refsToDelete.slice(offset, offset + FIRESTORE_BATCH_CHUNK_SIZE)) {
+      batch.delete(ref);
+    }
+    await batch.commit();
   }
-  for (const memberDoc of membersSnap.docs) {
-    batch.delete(memberDoc.ref);
-    // 削除済みリストは全メンバーから非表示にしているが(LIST-05)、
-    // listRefドキュメント自体はここで初めて消える。
-    batch.delete(db.collection("users").doc(memberDoc.id).collection("listRefs").doc(listId));
-  }
-  batch.delete(listRef);
-  await batch.commit();
 }
 
 /**

@@ -34,6 +34,12 @@ describe("unarchiveListHandler", () => {
     await expect(unarchiveListHandler(INPUT, "uid-1")).rejects.toMatchObject({ code: "permission-denied" });
   });
 
+  it("throws failed-precondition (not permission-denied) when the list is already deleted", async () => {
+    vi.mocked(listStore.unarchiveListTransaction).mockResolvedValue({ status: "already-deleted" });
+
+    await expect(unarchiveListHandler(INPUT, "uid-1")).rejects.toMatchObject({ code: "failed-precondition" });
+  });
+
   it("throws resource-exhausted when the free limit is reached", async () => {
     vi.mocked(listStore.unarchiveListTransaction).mockResolvedValue({ status: "limit-reached" });
 

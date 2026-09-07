@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { FIRESTORE_BATCH_CHUNK_SIZE } from "./constants";
 import { purgeExpiredDeletedListsHandler } from "./purgeExpiredDeletedLists";
 
 type FakeDbConfig = {
@@ -13,9 +14,11 @@ type FakeDbConfig = {
 
 function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {}, failingListIds = [] }: FakeDbConfig) {
   const deleted: unknown[] = [];
+  const commitCallSizes: number[] = [];
   let pendingForCurrentBatch: { path: string }[] = [];
   const batchDelete = vi.fn((ref: { path: string }) => pendingForCurrentBatch.push(ref));
   const commit = vi.fn(() => {
+    commitCallSizes.push(pendingForCurrentBatch.length);
     const failing = failingListIds.find((id) =>
       pendingForCurrentBatch.some((ref) => ref.path === `lists/${id}`)
     );
@@ -84,7 +87,7 @@ function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {}, failingL
     batch,
   };
 
-  return { db, deleted, commit, listsWhere: listsCollection.where };
+  return { db, deleted, commit, commitCallSizes, listsWhere: listsCollection.where };
 }
 
 describe("purgeExpiredDeletedListsHandler", () => {
@@ -147,5 +150,21 @@ describe("purgeExpiredDeletedListsHandler", () => {
     expect(deleted).toContainEqual(expect.objectContaining({ path: "lists/list-2" }));
     expect(deleted).not.toContainEqual(expect.objectContaining({ path: "lists/list-1" }));
     expect(consoleErrorSpy).toHaveBeenCalledOnce();
+  });
+
+  it("splits a large list's deletes across multiple batches instead of one 500+ write commit", async () => {
+    const manyItemIds = Array.from({ length: FIRESTORE_BATCH_CHUNK_SIZE + 1 }, (_, i) => `item-${i}`);
+    const { db, deleted, commitCallSizes } = fakeDb({
+      expiredListIds: ["list-1"],
+      itemsByList: { "list-1": manyItemIds },
+    });
+
+    const result = await purgeExpiredDeletedListsHandler(db as never, 1_000_000);
+
+    expect(result).toEqual({ purgedCount: 1 });
+    // FIRESTORE_BATCH_CHUNK_SIZE件のitems + 残り1件のitem + リスト本体1件。
+    expect(commitCallSizes).toEqual([FIRESTORE_BATCH_CHUNK_SIZE, 2]);
+    expect(deleted).toHaveLength(manyItemIds.length + 1);
+    expect(deleted).toContainEqual(expect.objectContaining({ path: "lists/list-1" }));
   });
 });
