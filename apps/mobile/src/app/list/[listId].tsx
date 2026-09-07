@@ -127,9 +127,15 @@ export default function ListDetailScreen() {
   // アーカイブ中は読み取り専用(LIST-05)。firestore.rulesでも項目write全般を
   // 拒否しているため、これはUI上の案内であり実際の防御はサーバー側にある。
   const isReadOnly = list != null && list.archivedAt !== null;
-  // 未完了のみ・検索・カテゴリ・担当者のいずれかで絞っている間は、可視順と
-  // sortOrderの隣接関係が一致しなくなるため手動並べ替えを無効にする。
-  const canReorder = !isReadOnly && !isItemFilterActive(filters);
+  // 未完了のみ・検索・カテゴリ・担当者のいずれかで絞っている間、または
+  // カテゴリ見出しや完了セクションで表示がグループ分けされている間は、
+  // 可視順(セクションをまたいだ並び)とsortOrderの隣接関係が一致しなく
+  // なるため手動並べ替えを無効にする。
+  const canReorder = !isReadOnly && !isItemFilterActive(filters) && sections.length <= 1;
+  // 並べ替え中にフィルターを変えてcanReorderがfalseになった場合に上下ボタンを
+  // 出しっぱなしにしないよう、表示条件にもcanReorderを含める(reorderItemId
+  // 自体はリセットしない。再度canReorderに戻れば続きから並べ替えられる)。
+  const isReordering = canReorder && reorderItemId !== null;
 
   // list/[listId]は認証済みグループ(app)の外にも登録されているため
   // (モーダル遷移用)、Universal Link等で未認証状態のまま開かれ得る。
@@ -164,7 +170,7 @@ export default function ListDetailScreen() {
   };
 
   const moveReorderingItem = (direction: 'up' | 'down') => {
-    if (!list || !reorderItemId || isReadOnly) {
+    if (!list || !reorderItemId || !canReorder) {
       return;
     }
     const newSortOrder = moveItemSortOrder(items, reorderItemId, direction);
@@ -371,7 +377,7 @@ export default function ListDetailScreen() {
                         <Text style={[Typography.caption, styles.itemMeta]}>{formatItemMeta(item, uid)}</Text>
                       ) : null}
                     </View>
-                    {reorderItemId === item.id ? (
+                    {isReordering && reorderItemId === item.id ? (
                       <View style={styles.reorderControls}>
                         <Pressable
                           accessibilityRole="button"

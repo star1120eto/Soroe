@@ -88,6 +88,10 @@ export default function ItemEditScreen() {
 
   const showQuantityUnit = list?.type === 'shopping' || list?.type === 'packing';
   const showDueDate = list?.type === 'task';
+  // アーカイブ中は読み取り専用(LIST-05)。通常はlist/[listId].tsx側で
+  // この画面へ遷移させないが、開いたまま他端末でアーカイブされる競合に
+  // 備えて保存・削除もここで防ぐ(実際の拒否はfirestore.rulesが行う)。
+  const isReadOnly = list != null && list.archivedAt !== null;
 
   // item-editも認証済みグループ(app)の外にモーダルとして登録しているため、
   // Universal Link等で未認証状態のまま開かれ得る。フックは全て上で
@@ -98,7 +102,7 @@ export default function ItemEditScreen() {
   const uid = profile.uid;
 
   const applySave = () => {
-    if (!item) {
+    if (!item || isReadOnly) {
       return;
     }
     const result = validateItemEditForm(form, showQuantityUnit, showDueDate);
@@ -119,7 +123,7 @@ export default function ItemEditScreen() {
 
   const handleSave = () => {
     setError(null);
-    if (!item) {
+    if (!item || isReadOnly) {
       return;
     }
     if (baseUpdatedAtRef.current !== null && item.updatedAt !== baseUpdatedAtRef.current) {
@@ -140,6 +144,9 @@ export default function ItemEditScreen() {
   };
 
   const handleDelete = () => {
+    if (isReadOnly) {
+      return;
+    }
     Alert.alert('この項目を削除しますか？', undefined, [
       { text: 'キャンセル', style: 'cancel' },
       {
@@ -176,6 +183,9 @@ export default function ItemEditScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         {error ? <Banner message={error} variant="danger" /> : null}
+        {isReadOnly ? (
+          <Banner message="アーカイブ中のため編集できません。アクティブに戻してください。" variant="warning" />
+        ) : null}
 
         <Input
           placeholder="項目名"
@@ -255,8 +265,8 @@ export default function ItemEditScreen() {
           <Text style={[Typography.body, styles.completedLabel]}>完了にする</Text>
         </View>
 
-        <Button label="保存する" onPress={handleSave} loading={isSaving} variant="primary" />
-        <Button label="この項目を削除" onPress={handleDelete} variant="destructive" />
+        <Button label="保存する" onPress={handleSave} loading={isSaving} disabled={isReadOnly} variant="primary" />
+        <Button label="この項目を削除" onPress={handleDelete} disabled={isReadOnly} variant="destructive" />
       </ScrollView>
     </SafeAreaView>
   );
