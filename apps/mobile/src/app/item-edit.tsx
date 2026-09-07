@@ -51,39 +51,51 @@ export default function ItemEditScreen() {
   const [members, setMembers] = useState<ListMember[]>([]);
   const [form, setForm] = useState<ItemEditFormState>(EMPTY_FORM);
   const [completed, setCompleted] = useState(false);
+  // 完了チェックボックスをこの編集セッションで実際に操作したかどうか。
+  // 素通りの値(item.completedAtから初期化しただけ)と区別しないと、他端末が
+  // 完了状態を変えた後に「自分の変更で上書き」した際、触ってもいない完了
+  // 状態を古い値で巻き戻してしまう。
+  const [completedTouched, setCompletedTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const initializedRef = useRef(false);
   const baseUpdatedAtRef = useRef<number | null>(null);
 
-  useEffect(() => subscribeToList(listId, setList, () => setList(null)), [listId]);
+  useEffect(() => {
+    if (!listId) {
+      return;
+    }
+    return subscribeToList(listId, setList, () => setList(null));
+  }, [listId]);
 
-  useEffect(
-    () =>
-      subscribeToListItem(
-        listId,
-        itemId,
-        (next) => {
-          setItem(next);
-          if (next && !initializedRef.current) {
-            initializedRef.current = true;
-            baseUpdatedAtRef.current = next.updatedAt;
-            setForm(formFromItem(next));
-            setCompleted(next.completedAt !== null);
-          }
-        },
-        () => setItem(null)
-      ),
-    [listId, itemId]
-  );
+  useEffect(() => {
+    if (!listId || !itemId) {
+      return;
+    }
+    return subscribeToListItem(
+      listId,
+      itemId,
+      (next) => {
+        setItem(next);
+        if (next && !initializedRef.current) {
+          initializedRef.current = true;
+          baseUpdatedAtRef.current = next.updatedAt;
+          setForm(formFromItem(next));
+          setCompleted(next.completedAt !== null);
+        }
+      },
+      () => setItem(null)
+    );
+  }, [listId, itemId]);
 
-  useEffect(
-    () =>
-      subscribeToListMembers(listId, setMembers, () => {
-        /* 担当者選択の表示専用データのため、失敗しても画面は継続する */
-      }),
-    [listId]
-  );
+  useEffect(() => {
+    if (!listId) {
+      return;
+    }
+    return subscribeToListMembers(listId, setMembers, () => {
+      /* 担当者選択の表示専用データのため、失敗しても画面は継続する */
+    });
+  }, [listId]);
 
   const showQuantityUnit = list?.type === 'shopping' || list?.type === 'packing';
   const showDueDate = list?.type === 'task';
@@ -113,7 +125,7 @@ export default function ItemEditScreen() {
     // updateListItem/setListItemCompletionはローカルキャッシュへの即時書込
     // (LIST-001)で本当に待つ非同期処理が無いため、ローディング状態は持たない。
     updateListItem(listId, itemId, result.input);
-    if (completed !== (item.completedAt !== null)) {
+    if (completedTouched) {
       setListItemCompletion(listId, itemId, uid, completed);
     }
     baseUpdatedAtRef.current = item.updatedAt;
@@ -133,6 +145,7 @@ export default function ItemEditScreen() {
             baseUpdatedAtRef.current = item.updatedAt;
             setForm(formFromItem(item));
             setCompleted(item.completedAt !== null);
+            setCompletedTouched(false);
           },
         },
         { text: '自分の変更で上書き', style: 'destructive', onPress: applySave },
@@ -260,7 +273,13 @@ export default function ItemEditScreen() {
         </View>
 
         <View style={styles.completedRow}>
-          <Checkbox checked={completed} onChange={setCompleted} />
+          <Checkbox
+            checked={completed}
+            onChange={(next) => {
+              setCompleted(next);
+              setCompletedTouched(true);
+            }}
+          />
           <Text style={[Typography.body, styles.completedLabel]}>完了にする</Text>
         </View>
 
