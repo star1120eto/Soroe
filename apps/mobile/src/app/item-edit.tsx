@@ -52,7 +52,6 @@ export default function ItemEditScreen() {
   const [form, setForm] = useState<ItemEditFormState>(EMPTY_FORM);
   const [completed, setCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   const initializedRef = useRef(false);
   const baseUpdatedAtRef = useRef<number | null>(null);
@@ -111,13 +110,13 @@ export default function ItemEditScreen() {
       return;
     }
 
-    setIsSaving(true);
+    // updateListItem/setListItemCompletionはローカルキャッシュへの即時書込
+    // (LIST-001)で本当に待つ非同期処理が無いため、ローディング状態は持たない。
     updateListItem(listId, itemId, result.input);
     if (completed !== (item.completedAt !== null)) {
       setListItemCompletion(listId, itemId, uid, completed);
     }
     baseUpdatedAtRef.current = item.updatedAt;
-    setIsSaving(false);
     router.back();
   };
 
@@ -265,7 +264,7 @@ export default function ItemEditScreen() {
           <Text style={[Typography.body, styles.completedLabel]}>完了にする</Text>
         </View>
 
-        <Button label="保存する" onPress={handleSave} loading={isSaving} disabled={isReadOnly} variant="primary" />
+        <Button label="保存する" onPress={handleSave} disabled={isReadOnly} variant="primary" />
         <Button label="この項目を削除" onPress={handleDelete} disabled={isReadOnly} variant="destructive" />
       </ScrollView>
     </SafeAreaView>
