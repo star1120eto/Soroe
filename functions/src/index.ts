@@ -26,3 +26,6 @@ export { createInvite } from "./invites/createInvite";
 export { revokeInvite } from "./invites/revokeInvite";
 export { getInvitePreview } from "./invites/getInvitePreview";
 export { acceptInvite } from "./invites/acceptInvite";
+export { removeMember } from "./lists/removeMember";
+export { leaveList } from "./lists/leaveList";
+export { transferOwnership } from "./lists/transferOwnership";
