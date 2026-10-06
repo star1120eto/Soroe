@@ -28,4 +28,19 @@ describe("getDisplayName", () => {
     await expect(getDisplayName("uid-1")).resolves.toBeNull();
     await expect(getDisplayName("uid-1")).resolves.toBeNull();
   });
+
+  it("trims surrounding whitespace", async () => {
+    get.mockResolvedValue({ data: () => ({ displayName: "  はなこ  " }) });
+    await expect(getDisplayName("uid-1")).resolves.toBe("はなこ");
+  });
+
+  it("returns null for a name over the 30-character profile limit, so an unvalidated client write cannot reach other members", async () => {
+    get.mockResolvedValue({ data: () => ({ displayName: "あ".repeat(31) }) });
+    await expect(getDisplayName("uid-1")).resolves.toBeNull();
+  });
+
+  it("accepts a name of exactly 30 characters", async () => {
+    get.mockResolvedValue({ data: () => ({ displayName: "あ".repeat(30) }) });
+    await expect(getDisplayName("uid-1")).resolves.toBe("あ".repeat(30));
+  });
 });

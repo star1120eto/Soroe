@@ -16,32 +16,45 @@ export function computeItemCounts(
   };
 }
 
+// 集計はtransactionで行う。transaction外で「読む→書く」を行うと、並行する別の
+// invocationが古い読み取り結果を後から書き込み、最新の値を上書きしうる
+// (transactionなら競合を検知して読み直すため、最後に書かれた値は常に最新の状態と一致する)。
+// また、メンバーのlistRefが既に無い場合は書かない: メンバー削除や物理削除と競合した際に、
+// 削除済みのlistRefをname等を持たない不完全なドキュメントとして復活させ、クライアントの
+// 一覧変換(toUserListRef)を壊さないため。
 export async function syncListItemCountsHandler(
-  db: Pick<Firestore, "collection" | "batch">,
+  db: Pick<Firestore, "collection" | "runTransaction">,
   listId: string
 ): Promise<void> {
   const listRef = db.collection("lists").doc(listId);
-  const itemsSnap = await listRef.collection("items").where("deletedAt", "==", null).get();
-  const counts = computeItemCounts(
-    itemsSnap.docs.map((doc: { data: () => DocumentData }) => doc.data() as { completedAt: unknown })
-  );
 
-  const membersSnap = await listRef.collection("members").get();
-  if (membersSnap.empty) {
-    return;
-  }
+  await db.runTransaction(async (tx) => {
+    // 件数の再計算(項目の全件読取)より安価なメンバー確認を先に行い、物理削除済みの
+    // リスト(項目だけ順次消えていく途中)では項目を読まずに終える。
+    const membersSnap = await tx.get(listRef.collection("members"));
+    if (membersSnap.empty) {
+      return;
+    }
 
-  const batch = db.batch();
-  for (const memberDoc of membersSnap.docs) {
-    // updateではなくmerge:trueのsetにしているのは、対象のlistRefが万一
-    // 存在しない場合でもbatch全体を失敗させないため。
-    batch.set(
-      db.collection("users").doc(memberDoc.id).collection("listRefs").doc(listId),
-      counts,
-      { merge: true }
+    const listRefs = membersSnap.docs.map((memberDoc) =>
+      db.collection("users").doc(memberDoc.id).collection("listRefs").doc(listId)
     );
-  }
-  await batch.commit();
+    const [itemsSnap, listRefSnaps] = await Promise.all([
+      tx.get(listRef.collection("items").where("deletedAt", "==", null)),
+      tx.getAll(...listRefs),
+    ]);
+    const counts = computeItemCounts(
+      itemsSnap.docs.map((doc: { data: () => DocumentData }) => doc.data() as { completedAt: unknown })
+    );
+
+    for (const snap of listRefSnaps) {
+      const current = snap.data();
+      if (!snap.exists || (current?.totalCount === counts.totalCount && current?.completedCount === counts.completedCount)) {
+        continue;
+      }
+      tx.update(snap.ref, counts);
+    }
+  });
 }
 
 // items/{itemId}への追加・更新(完了トグル・論理削除含む)すべてで発火する。

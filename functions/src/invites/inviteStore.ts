@@ -142,9 +142,10 @@ export async function getInvitePreview(tokenHash: string, nowMs: number): Promis
     return { status: unavailable };
   }
 
-  const [inviterSnap, membersSnap] = await Promise.all([
+  const [inviterSnap, memberCountSnap] = await Promise.all([
     db.collection("users").doc(invite!.inviterId).get(),
-    db.collection("lists").doc(invite!.listId).collection("members").get(),
+    // 件数だけが要るので、全メンバー分のドキュメントを読まず集計クエリで数える。
+    db.collection("lists").doc(invite!.listId).collection("members").count().get(),
   ]);
   const inviterName = inviterSnap.data()?.displayName;
 
@@ -152,7 +153,7 @@ export async function getInvitePreview(tokenHash: string, nowMs: number): Promis
     status: "valid",
     listName: list!.name as string,
     inviterName: typeof inviterName === "string" && inviterName.trim() !== "" ? inviterName : null,
-    memberCount: membersSnap.size,
+    memberCount: memberCountSnap.data().count,
     expiresAt: invite!.expiresAtMs,
   };
 }

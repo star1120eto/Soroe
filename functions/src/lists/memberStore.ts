@@ -1,6 +1,5 @@
 import {
   FieldValue,
-  getFirestore,
   type DocumentData,
   type Firestore,
   type Transaction,
@@ -8,12 +7,6 @@ import {
 import type { ListRole } from "@soroe/shared";
 
 import { isUnderActiveListLimit, type Plan } from "./listLimit";
-
-export type AddMemberResult =
-  | { status: "added" }
-  | { status: "already-member" }
-  | { status: "limit-reached" }
-  | { status: "not-found" };
 
 // メンバー追加に必要な読み取り結果。Firestoreのtransactionはread-then-writeが
 // 必須のため、呼び出し元(acceptInviteなど)が自分の検証用の読み取りと合わせて
@@ -101,35 +94,4 @@ export function writeMemberAdd(
       { merge: true }
     );
   }
-}
-
-// 招待受諾(acceptInvite)など、検証を済ませた呼び出し元から使う。クライアントが
-// 直接メンバーを増やせないこと(Rules)と対になる、メンバー追加の唯一の経路。
-// 冪等性は「既にメンバーか」で判定する: 同一ユーザーが二重に参加しようとしても
-// 新しい状態を作らない。Free上限判定は、チェックと参加確定の間に別の参加が
-// 割り込むレースを避けるため、参加確定と同じtransaction内で行う。
-export async function addMemberTransaction(
-  listId: string,
-  uid: string,
-  role: ListRole,
-  plan: Plan,
-  displayName: string | null
-): Promise<AddMemberResult> {
-  const db = getFirestore();
-
-  return db.runTransaction(async (tx) => {
-    const state = await readMemberAddState(tx, db, listId, uid);
-    if (state === null) {
-      return { status: "not-found" as const };
-    }
-    if (state.memberExists) {
-      return { status: "already-member" as const };
-    }
-    if (isJoinBlockedByLimit(state, plan)) {
-      return { status: "limit-reached" as const };
-    }
-
-    writeMemberAdd(tx, db, listId, uid, role, displayName, state);
-    return { status: "added" as const };
-  });
 }

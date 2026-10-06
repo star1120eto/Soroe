@@ -52,8 +52,8 @@ async function seedList(listId = LIST_ID, overrides: Record<string, unknown> = {
     color: "primary",
     icon: "ph:shopping-cart-simple",
     role: "owner",
-    totalCount: 0,
-    completedCount: 0,
+    totalCount: 4,
+    completedCount: 1,
     memberCount: 1,
     updatedAt: now,
     archivedAt: null,
@@ -213,6 +213,14 @@ describe("getInvitePreview", () => {
     });
   });
 
+  it("counts every member, not just the owner", async () => {
+    await db.doc(`lists/${LIST_ID}/members/${EDITOR}`).set({ role: "editor", joinedAt: Timestamp.now() });
+    await db.doc(`lists/${LIST_ID}/members/${JOINER}`).set({ role: "editor", joinedAt: Timestamp.now() });
+    await seedInvite();
+
+    await expect(getInvitePreview(TOKEN_HASH, NOW)).resolves.toMatchObject({ status: "valid", memberCount: 3 });
+  });
+
   it("uses a null inviter name when the inviter has no profile", async () => {
     await db.doc(`users/${OWNER}`).delete();
     await seedInvite();
@@ -258,9 +266,17 @@ describe("acceptInviteTransaction", () => {
     expect(result).toEqual({ status: "joined", listId: LIST_ID });
     expect((await memberDoc(JOINER)).data()).toMatchObject({ role: "editor", displayName: "はなこ" });
     expect((await db.doc(`users/${JOINER}/listRefs/${LIST_ID}`).get()).data()).toMatchObject({
-      role: "editor",
-      memberCount: 2,
       name: "今週の買い物",
+      type: "shopping",
+      color: "primary",
+      icon: "ph:shopping-cart-simple",
+      role: "editor",
+      archivedAt: null,
+      deletedAt: null,
+      memberCount: 2,
+      // 参加直後の初期表示用に、既存の集計値を引き継ぐ。
+      totalCount: 4,
+      completedCount: 1,
     });
     expect((await db.doc(`users/${OWNER}/listRefs/${LIST_ID}`).get()).data()?.memberCount).toBe(2);
   });
@@ -269,7 +285,9 @@ describe("acceptInviteTransaction", () => {
     await acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-1", "free", NOW);
     await acceptInviteTransaction("third-uid", null, TOKEN_HASH, "req-2", "free", NOW);
 
-    expect((await db.doc(`users/${OWNER}/listRefs/${LIST_ID}`).get()).data()?.memberCount).toBe(3);
+    for (const uid of [OWNER, JOINER, "third-uid"]) {
+      expect((await db.doc(`users/${uid}/listRefs/${LIST_ID}`).get()).data()?.memberCount).toBe(3);
+    }
     expect((await db.doc(`invites/${TOKEN_HASH}`).get()).data()?.status).toBe("active");
   });
 
@@ -338,11 +356,43 @@ describe("acceptInviteTransaction", () => {
       status: "limit-reached",
     });
     expect((await memberDoc(JOINER)).exists).toBe(false);
+    expect((await db.doc(`users/${JOINER}/listRefs/${LIST_ID}`).get()).exists).toBe(false);
+    expect((await db.doc(`users/${OWNER}/listRefs/${LIST_ID}`).get()).data()?.memberCount).toBe(1);
 
     await expect(acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-2", "premium", NOW)).resolves.toEqual({
       status: "joined",
       listId: LIST_ID,
     });
+  });
+
+  it("does not count archived lists toward the Free limit", async () => {
+    for (let i = 0; i < 2; i++) {
+      await db.doc(`users/${JOINER}/listRefs/active-${i}`).set({ name: `他${i}`, role: "owner", archivedAt: null });
+      await db.doc(`users/${JOINER}/listRefs/archived-${i}`).set({ name: `古${i}`, role: "owner", archivedAt: Timestamp.now() });
+    }
+
+    await expect(acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-1", "free", NOW)).resolves.toEqual({
+      status: "joined",
+      listId: LIST_ID,
+    });
+  });
+
+  it("does not let two concurrent joins to different lists exceed the Free limit", async () => {
+    // 2件持っている状態で、別々の2リストへ同時に参加する。transactionが直列化されるため、
+    // 片方だけが成功する(合計3件で止まる)。
+    for (let i = 0; i < 2; i++) {
+      await db.doc(`users/${JOINER}/listRefs/other-${i}`).set({ name: `他${i}`, role: "owner", archivedAt: null });
+    }
+    await seedList("list-2");
+    const otherToken = hashInviteToken(OTHER_TOKEN);
+    await seedInvite(otherToken, { listId: "list-2" });
+
+    const results = await Promise.all([
+      acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-a", "free", NOW),
+      acceptInviteTransaction(JOINER, "はなこ", otherToken, "req-b", "free", NOW),
+    ]);
+
+    expect(results.map((r) => r.status).sort()).toEqual(["joined", "limit-reached"]);
   });
 
   it("does not record the request when the join was blocked, so a retry after archiving can succeed", async () => {
