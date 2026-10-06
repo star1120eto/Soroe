@@ -74,7 +74,7 @@ function arrange({
   });
   jest.mocked(subscribeToListMembers).mockImplementation((_id, onChange, onError) => {
     if (membersError) {
-      onError(membersError as Error);
+      onError(membersError as unknown as Error);
     } else {
       onChange(members);
     }
