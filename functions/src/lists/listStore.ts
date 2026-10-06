@@ -23,7 +23,8 @@ export async function createListTransaction(
   uid: string,
   requestId: string,
   fields: CreateListFields,
-  plan: Plan
+  plan: Plan,
+  displayName: string | null
 ): Promise<CreateListResult> {
   const db = getFirestore();
   const userRef = db.collection("users").doc(uid);
@@ -60,6 +61,7 @@ export async function createListTransaction(
     tx.set(listRef.collection("members").doc(uid), {
       role: "owner",
       joinedAt: now,
+      displayName,
     });
     tx.set(userRef.collection("listRefs").doc(listRef.id), {
       name: fields.name,
@@ -262,7 +264,8 @@ export async function duplicateListTransaction(
   uid: string,
   requestId: string,
   sourceListId: string,
-  plan: Plan
+  plan: Plan,
+  displayName: string | null
 ): Promise<DuplicateListResult> {
   const db = getFirestore();
   const userRef = db.collection("users").doc(uid);
@@ -316,7 +319,7 @@ export async function duplicateListTransaction(
       archivedAt: null,
       deletedAt: null,
     });
-    tx.set(newListRef.collection("members").doc(uid), { role: "owner", joinedAt: now });
+    tx.set(newListRef.collection("members").doc(uid), { role: "owner", joinedAt: now, displayName });
     tx.set(userRef.collection("listRefs").doc(newListRef.id), {
       name: copiedName,
       type: source.type,

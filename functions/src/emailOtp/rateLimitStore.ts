@@ -2,10 +2,10 @@ import { getFirestore } from "firebase-admin/firestore";
 
 import { checkRateLimit, type RateLimitWindow } from "./rateLimit";
 
-const COLLECTION = "otpRateLimits";
+const DEFAULT_COLLECTION = "otpRateLimits";
 
-function docRef(key: string) {
-  return getFirestore().collection(COLLECTION).doc(key);
+function docRef(key: string, collection: string) {
+  return getFirestore().collection(collection).doc(key);
 }
 
 // Reads the current window, applies the pure checkRateLimit decision, and
@@ -14,13 +14,14 @@ export async function consumeRateLimit(
   key: string,
   nowMs: number,
   windowMs: number,
-  maxCount: number
+  maxCount: number,
+  collection: string = DEFAULT_COLLECTION
 ): Promise<boolean> {
-  const snap = await docRef(key).get();
+  const snap = await docRef(key, collection).get();
   const current = snap.exists ? (snap.data() as RateLimitWindow) : undefined;
 
   const decision = checkRateLimit(current, nowMs, windowMs, maxCount);
-  await docRef(key).set({
+  await docRef(key, collection).set({
     windowStart: decision.nextWindow.windowStart,
     count: decision.nextWindow.count,
   });

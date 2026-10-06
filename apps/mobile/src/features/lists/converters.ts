@@ -4,6 +4,7 @@ import {
   listMemberSchema,
   listSchema,
   userListRefSchema,
+  userProfileSchema,
   type List,
   type ListItem,
   type ListMember,
@@ -74,6 +75,11 @@ export function toListItem(id: string, listId: string, data: FirestoreData): Lis
   });
 }
 
+function parseMemberDisplayName(value: unknown): string | null {
+  const parsed = userProfileSchema.shape.displayName.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 export function toListMember(uid: string, listId: string, data: FirestoreData): ListMember {
   const now = Date.now();
   return listMemberSchema.parse({
@@ -81,6 +87,10 @@ export function toListMember(uid: string, listId: string, data: FirestoreData): 
     listId,
     role: data.role,
     joinedAt: requireMillis(data.joinedAt, now),
+    // 表示名は参加時にサーバーが検証して非正規化するが、不正な値が1件あるだけで
+    // メンバー一覧の購読全体が例外になるのを避けるため、プロフィールの規則
+    // (trim、1〜30文字)を満たさなければnull(UIが「メンバー」へフォールバックする)。
+    displayName: parseMemberDisplayName(data.displayName),
   });
 }
 
@@ -100,4 +110,20 @@ export function toUserListRef(listId: string, data: FirestoreData): UserListRef 
     archivedAt: toMillis(data.archivedAt),
     deletedAt: toMillis(data.deletedAt),
   });
+}
+
+/**
+ * 一覧用参照の一括変換。name等を持たない不完全なドキュメント(集計だけが書き込まれた
+ * 等)が1件あっても、その1件だけを読み飛ばし、残りのリストを表示できるようにする。
+ */
+export function toUserListRefs(docs: { id: string; data: () => FirestoreData }[]): UserListRef[] {
+  const refs: UserListRef[] = [];
+  for (const doc of docs) {
+    try {
+      refs.push(toUserListRef(doc.id, doc.data()));
+    } catch (error) {
+      console.warn(`skipping malformed listRef ${doc.id}`, error);
+    }
+  }
+  return refs;
 }
