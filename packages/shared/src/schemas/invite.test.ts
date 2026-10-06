@@ -78,7 +78,7 @@ describe("invitePreviewResponseSchema", () => {
     ).toBe("valid");
   });
 
-  it.each(["expired", "revoked", "list-deleted", "list-archived", "not-found"])(
+  it.each(["expired", "revoked", "used", "list-deleted", "list-archived", "not-found"])(
     "reports %s without leaking any list details",
     (status) => {
       expect(invitePreviewResponseSchema.parse({ status })).toEqual({ status });
@@ -103,7 +103,7 @@ describe("acceptInvite schemas", () => {
     });
   });
 
-  it.each(["limit-reached", "own-invite", "expired", "revoked", "list-deleted", "list-archived", "not-found"])(
+  it.each(["limit-reached", "own-invite", "expired", "revoked", "used", "list-deleted", "list-archived", "not-found"])(
     "returns %s as a plain status",
     (status) => {
       expect(acceptInviteResponseSchema.parse({ status })).toEqual({ status });

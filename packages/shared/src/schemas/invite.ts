@@ -31,6 +31,8 @@ export type RevokeInviteRequest = z.infer<typeof revokeInviteRequestSchema>;
 export const inviteUnavailableStatusSchema = z.enum([
   "expired",
   "revoked",
+  // 招待リンクは1回のみ有効。誰かが参加に使った時点で失効する。
+  "used",
   "list-deleted",
   "list-archived",
   "not-found",
@@ -69,6 +71,7 @@ export const acceptInviteResponseSchema = z.discriminatedUnion("status", [
   z.object({ status: z.literal("own-invite") }),
   z.object({ status: z.literal("expired") }),
   z.object({ status: z.literal("revoked") }),
+  z.object({ status: z.literal("used") }),
   z.object({ status: z.literal("list-deleted") }),
   z.object({ status: z.literal("list-archived") }),
   z.object({ status: z.literal("not-found") }),

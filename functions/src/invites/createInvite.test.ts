@@ -54,6 +54,7 @@ describe("createInviteHandler", () => {
     ["forbidden", "permission-denied"],
     ["list-unavailable", "failed-precondition"],
     ["token-conflict", "already-exists"],
+    ["too-many-active", "failed-precondition"],
   ] as const)("maps %s to the %s error code", async (status, code) => {
     vi.mocked(inviteStore.createInviteTransaction).mockResolvedValue({ status });
 

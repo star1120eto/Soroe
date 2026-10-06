@@ -25,6 +25,11 @@ export async function createInviteHandler(
       throw new HttpsError("permission-denied", "オーナーだけが招待を作成できます");
     case "list-unavailable":
       throw new HttpsError("failed-precondition", "アーカイブ中・削除済みのリストには招待できません");
+    case "too-many-active":
+      throw new HttpsError(
+        "failed-precondition",
+        "有効な招待リンクが上限に達しています。使わないリンクを取り消してください"
+      );
     case "token-conflict":
       throw new HttpsError("already-exists", "招待リンクを作成できませんでした。もう一度お試しください");
   }

@@ -1,7 +1,7 @@
 import { Timestamp, type Firestore } from "firebase-admin/firestore";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { INVITE_EXPIRY_MS } from "../invites/inviteStatus";
+import { INVITE_EXPIRY_MS, MAX_ACTIVE_INVITES_PER_LIST } from "../invites/inviteStatus";
 import {
   acceptInviteTransaction,
   createInviteTransaction,
@@ -72,6 +72,8 @@ async function seedInvite(
     createdAt: Timestamp.fromMillis(NOW),
     expiresAt: Timestamp.fromMillis(NOW + INVITE_EXPIRY_MS),
     revokedAt: null,
+    acceptedBy: null,
+    acceptedAt: null,
     ...overrides,
   });
 }
@@ -96,24 +98,52 @@ describe("createInviteTransaction", () => {
       expiresAtMs: NOW + INVITE_EXPIRY_MS,
     });
     const snap = await db.doc(`invites/${TOKEN_HASH}`).get();
-    expect(snap.data()).toMatchObject({ listId: LIST_ID, inviterId: OWNER, status: "active", revokedAt: null });
+    expect(snap.data()).toMatchObject({
+      listId: LIST_ID,
+      inviterId: OWNER,
+      status: "active",
+      revokedAt: null,
+      acceptedBy: null,
+      acceptedAt: null,
+    });
     expect((snap.data()!.expiresAt as Timestamp).toMillis()).toBe(NOW + INVITE_EXPIRY_MS);
     // 平文トークンはどのフィールドにも・IDにも残らない。
     expect(JSON.stringify(snap.data())).not.toContain(TOKEN);
     expect(snap.id).not.toContain(TOKEN);
   });
 
-  it("revokes the previous active invite when a new one is issued", async () => {
+  it("keeps earlier links valid: one single-use link is issued per recipient", async () => {
     await createInviteTransaction(OWNER, LIST_ID, TOKEN_HASH, NOW);
     await createInviteTransaction(OWNER, LIST_ID, hashInviteToken(OTHER_TOKEN), NOW + 1000);
 
-    const first = (await db.doc(`invites/${TOKEN_HASH}`).get()).data();
-    const second = (await db.doc(`invites/${hashInviteToken(OTHER_TOKEN)}`).get()).data();
-    expect(first?.status).toBe("revoked");
-    expect(first?.revokedAt).not.toBeNull();
-    expect(second?.status).toBe("active");
+    expect((await db.doc(`invites/${TOKEN_HASH}`).get()).data()?.status).toBe("active");
+    expect((await db.doc(`invites/${hashInviteToken(OTHER_TOKEN)}`).get()).data()?.status).toBe("active");
     const active = await db.collection("invites").where("listId", "==", LIST_ID).where("status", "==", "active").get();
-    expect(active.size).toBe(1);
+    expect(active.size).toBe(2);
+  });
+
+  it("refuses a new link once the cap of outstanding links is reached", async () => {
+    for (let i = 0; i < MAX_ACTIVE_INVITES_PER_LIST; i++) {
+      await seedInvite(hashInviteToken(`${i}`.padStart(64, "c")));
+    }
+
+    const result = await createInviteTransaction(OWNER, LIST_ID, TOKEN_HASH, NOW);
+
+    expect(result).toEqual({ status: "too-many-active" });
+    expect((await db.doc(`invites/${TOKEN_HASH}`).get()).exists).toBe(false);
+  });
+
+  it("does not count expired, revoked or used links toward the cap", async () => {
+    for (let i = 0; i < MAX_ACTIVE_INVITES_PER_LIST; i++) {
+      const hash = hashInviteToken(`${i}`.padStart(64, "d"));
+      if (i % 3 === 0) await seedInvite(hash, { expiresAt: Timestamp.fromMillis(NOW - 1) });
+      else if (i % 3 === 1) await seedInvite(hash, { status: "revoked" });
+      else await seedInvite(hash, { status: "accepted", acceptedBy: "someone" });
+    }
+
+    await expect(createInviteTransaction(OWNER, LIST_ID, TOKEN_HASH, NOW)).resolves.toMatchObject({
+      status: "created",
+    });
   });
 
   it("is idempotent for the same token: it reuses the invite and revokes nothing", async () => {
@@ -179,6 +209,14 @@ describe("revokeInviteTransaction", () => {
     expect(((await db.doc(`invites/${TOKEN_HASH}`).get()).data()?.revokedAt as Timestamp).toMillis()).toBe(NOW);
   });
 
+  it("leaves a link that was already used as it is (nothing left to revoke)", async () => {
+    await db.doc(`invites/${TOKEN_HASH}`).update({ status: "accepted", acceptedBy: JOINER });
+
+    await expect(revokeInviteTransaction(OWNER, TOKEN_HASH, NOW)).resolves.toBe("ok");
+
+    expect((await db.doc(`invites/${TOKEN_HASH}`).get()).data()).toMatchObject({ status: "accepted", revokedAt: null });
+  });
+
   it("refuses non-owners", async () => {
     await db.doc(`lists/${LIST_ID}/members/${EDITOR}`).set({ role: "editor", joinedAt: Timestamp.now() });
 
@@ -231,6 +269,7 @@ describe("getInvitePreview", () => {
   it.each([
     ["not-found", async () => {}, TOKEN_HASH],
     ["revoked", async () => seedInvite(TOKEN_HASH, { status: "revoked" }), TOKEN_HASH],
+    ["used", async () => seedInvite(TOKEN_HASH, { status: "accepted", acceptedBy: "someone" }), TOKEN_HASH],
     ["expired", async () => seedInvite(TOKEN_HASH, { expiresAt: Timestamp.fromMillis(NOW - 1) }), TOKEN_HASH],
     [
       "list-deleted",
@@ -281,13 +320,69 @@ describe("acceptInviteTransaction", () => {
     expect((await db.doc(`users/${OWNER}/listRefs/${LIST_ID}`).get()).data()?.memberCount).toBe(2);
   });
 
-  it("keeps the link usable for several family members until it expires", async () => {
+  it("uses the link up: it cannot be used by a second person", async () => {
     await acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-1", "free", NOW);
-    await acceptInviteTransaction("third-uid", null, TOKEN_HASH, "req-2", "free", NOW);
+
+    const invite = (await db.doc(`invites/${TOKEN_HASH}`).get()).data()!;
+    expect(invite.status).toBe("accepted");
+    expect(invite.acceptedBy).toBe(JOINER);
+    expect((invite.acceptedAt as Timestamp).toMillis()).toBeGreaterThan(0);
+    await expect(acceptInviteTransaction("third-uid", null, TOKEN_HASH, "req-2", "free", NOW)).resolves.toEqual({
+      status: "used",
+    });
+    expect((await memberDoc("third-uid")).exists).toBe(false);
+  });
+
+  it("lets several family members join, each through their own link", async () => {
+    const secondHash = hashInviteToken(OTHER_TOKEN);
+    await seedInvite(secondHash);
+
+    await acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-1", "free", NOW);
+    await acceptInviteTransaction("third-uid", null, secondHash, "req-2", "free", NOW);
 
     for (const uid of [OWNER, JOINER, "third-uid"]) {
       expect((await db.doc(`users/${uid}/listRefs/${LIST_ID}`).get()).data()?.memberCount).toBe(3);
     }
+  });
+
+  it("opens the list when the person who used the link opens it again while still a member", async () => {
+    await acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-1", "free", NOW);
+
+    await expect(acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-2", "free", NOW)).resolves.toEqual({
+      status: "already-member",
+      listId: LIST_ID,
+    });
+  });
+
+  it("does not let a removed member back in with the link they already used", async () => {
+    await acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-1", "free", NOW);
+    await db.doc(`lists/${LIST_ID}/members/${JOINER}`).delete();
+    await db.doc(`users/${JOINER}/listRefs/${LIST_ID}`).delete();
+
+    await expect(acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-2", "free", NOW)).resolves.toEqual({
+      status: "used",
+    });
+    expect((await memberDoc(JOINER)).exists).toBe(false);
+  });
+
+  it("lets only one of two people racing for the same link join", async () => {
+    const results = await Promise.all([
+      acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-a", "free", NOW),
+      acceptInviteTransaction("third-uid", "じろう", TOKEN_HASH, "req-b", "free", NOW),
+    ]);
+
+    expect(results.map((r) => r.status).sort()).toEqual(["joined", "used"]);
+    expect((await db.doc(`users/${OWNER}/listRefs/${LIST_ID}`).get()).data()?.memberCount).toBe(2);
+  });
+
+  it("does not use up the link when the join is blocked by the Free limit", async () => {
+    for (let i = 0; i < 3; i++) {
+      await db.doc(`users/${JOINER}/listRefs/other-${i}`).set({ name: `他${i}`, role: "owner", archivedAt: null });
+    }
+
+    await expect(acceptInviteTransaction(JOINER, "はなこ", TOKEN_HASH, "req-1", "free", NOW)).resolves.toEqual({
+      status: "limit-reached",
+    });
     expect((await db.doc(`invites/${TOKEN_HASH}`).get()).data()?.status).toBe("active");
   });
 
@@ -327,6 +422,7 @@ describe("acceptInviteTransaction", () => {
   it.each([
     ["not-found", async () => db.doc(`invites/${TOKEN_HASH}`).delete()],
     ["revoked", async () => db.doc(`invites/${TOKEN_HASH}`).update({ status: "revoked" })],
+    ["used", async () => db.doc(`invites/${TOKEN_HASH}`).update({ status: "accepted", acceptedBy: "someone-else" })],
     [
       "expired",
       async () => db.doc(`invites/${TOKEN_HASH}`).update({ expiresAt: Timestamp.fromMillis(NOW - 1) }),

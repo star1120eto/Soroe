@@ -7,10 +7,16 @@ export function computeInviteExpiry(createdAtMs: number): number {
   return createdAtMs + INVITE_EXPIRY_MS;
 }
 
+// 1リストで同時に有効にできる(未使用・未取消・未期限切れの)招待の上限。招待リンクは
+// 1回のみ有効で人ごとに発行するため複数本が並ぶが、無制限には溜めない。
+export const MAX_ACTIVE_INVITES_PER_LIST = 10;
+
 export type InviteRecord = {
   listId: string;
   inviterId: string;
-  status: "active" | "revoked";
+  // accepted: 誰かが参加に使った(リンクは1回のみ有効)。
+  status: "active" | "revoked" | "accepted";
+  acceptedBy: string | null;
   expiresAtMs: number;
 };
 
@@ -33,6 +39,9 @@ export function classifyInvite(
   }
   if (invite.status === "revoked") {
     return "revoked";
+  }
+  if (invite.status === "accepted") {
+    return "used";
   }
   if (invite.expiresAtMs <= nowMs) {
     return "expired";

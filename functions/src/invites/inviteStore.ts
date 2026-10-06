@@ -3,7 +3,7 @@ import type { AcceptInviteResponse, InvitePreviewResponse } from "@soroe/shared"
 
 import { isJoinBlockedByLimit, readMemberAddState, writeMemberAdd } from "../lists/memberStore";
 import type { Plan } from "../lists/listLimit";
-import { classifyInvite, computeInviteExpiry, type InviteRecord } from "./inviteStatus";
+import { MAX_ACTIVE_INVITES_PER_LIST, classifyInvite, computeInviteExpiry, type InviteRecord } from "./inviteStatus";
 
 // invites/{tokenHash}: 招待トークンの平文は保存せず、ドキュメントIDをSHA-256とする。
 // 作成・取消・受諾の検証はすべてAdmin SDK(Callable Functions)で行い、Rulesは
@@ -13,7 +13,8 @@ function toInviteRecord(data: DocumentData): InviteRecord {
   return {
     listId: data.listId as string,
     inviterId: data.inviterId as string,
-    status: data.status as "active" | "revoked",
+    status: data.status as InviteRecord["status"],
+    acceptedBy: (data.acceptedBy as string | null | undefined) ?? null,
     expiresAtMs: (data.expiresAt as Timestamp).toMillis(),
   };
 }
@@ -23,12 +24,15 @@ export type CreateInviteResult =
   | { status: "not-found" }
   | { status: "forbidden" }
   | { status: "list-unavailable" }
-  | { status: "token-conflict" };
+  | { status: "token-conflict" }
+  | { status: "too-many-active" };
 
 /**
- * 招待リンクの発行。1リストの有効な招待は常に高々1本で、新しく発行すると同じ
- * transaction内で以前の有効な招待を取り消す。トークン(のハッシュ)が冪等性キーを
- * 兼ねる: 同じトークンの再送は新規作成も取消もせず、最初の結果を返す。
+ * 招待リンクの発行。リンクは1回のみ有効で、招待する相手ごとに発行する(複数の相手に
+ * 送るときは人ごとに発行する)ため、新しく発行しても以前の有効な招待は取り消さない。
+ * 未使用・未取消・未期限切れの招待が上限(MAX_ACTIVE_INVITES_PER_LIST)に達していれば
+ * 発行しない。トークン(のハッシュ)が冪等性キーを兼ねる: 同じトークンの再送は
+ * 新規作成せず、最初の結果を返す。
  */
 export async function createInviteTransaction(
   uid: string,
@@ -71,10 +75,13 @@ export async function createInviteTransaction(
       return { status: "token-conflict" as const };
     }
 
-    const now = Timestamp.fromMillis(nowMs);
-    for (const previous of activeSnap.docs) {
-      tx.update(previous.ref, { status: "revoked", revokedAt: now });
+    // statusがactiveのままでも期限切れのものは、もう使えないので数えない。
+    const outstanding = activeSnap.docs.filter((doc) => toInviteRecord(doc.data()).expiresAtMs > nowMs).length;
+    if (outstanding >= MAX_ACTIVE_INVITES_PER_LIST) {
+      return { status: "too-many-active" as const };
     }
+
+    const now = Timestamp.fromMillis(nowMs);
     const expiresAtMs = computeInviteExpiry(nowMs);
     tx.set(inviteRef, {
       listId,
@@ -83,6 +90,8 @@ export async function createInviteTransaction(
       createdAt: now,
       expiresAt: Timestamp.fromMillis(expiresAtMs),
       revokedAt: null,
+      acceptedBy: null,
+      acceptedAt: null,
     });
 
     return { status: "created" as const, inviteId: tokenHash, expiresAtMs };
@@ -93,7 +102,7 @@ export type RevokeInviteResult = "ok" | "not-found" | "forbidden";
 
 /**
  * 招待の取消。権限は招待者ではなく「そのリストの現オーナー」で判定する
- * (所有権移譲後は新オーナーが取り消せる)。取消済みへの再送は冪等に成功する。
+ * (所有権移譲後は新オーナーが取り消せる)。取消済み・使用済みへの再送は冪等に成功する。
  */
 export async function revokeInviteTransaction(
   uid: string,
@@ -116,7 +125,8 @@ export async function revokeInviteTransaction(
     if (listSnap.data()!.ownerId !== uid) {
       return "forbidden";
     }
-    if (invite.status === "revoked") {
+    // 取消済み・使用済みの招待には、取り消すものが残っていない。
+    if (invite.status !== "active") {
       return "ok";
     }
 
@@ -159,10 +169,12 @@ export async function getInvitePreview(tokenHash: string, nowMs: number): Promis
 }
 
 /**
- * 招待の受諾。検証(期限・取消・削除・自分の招待・既参加・Free上限)と参加確定を
- * 1つのtransactionで行う。招待リンクは期限内なら複数人が使える。
- * requestIdは成功時だけ記録する(拒否理由は状況が変われば再送で結果が変わって
- * よいため。例: 既存リストをアーカイブした後の再試行)。
+ * 招待の受諾。検証(期限・取消・使用済み・削除・自分の招待・既参加・Free上限)と参加確定、
+ * 招待の使用済み化を1つのtransactionで行う。リンクは1回のみ有効なので、参加した時点で
+ * 失効し、同じリンクを別の人が(あるいは削除された本人が)使うことはできない。
+ * Free上限などで参加できなかったときはリンクを使い切らない。
+ * requestIdは成功時だけ記録する(拒否理由は状況が変われば再送で結果が変わってよいため。
+ * 例: 既存リストをアーカイブした後の再試行)。
  */
 export async function acceptInviteTransaction(
   uid: string,
@@ -186,6 +198,12 @@ export async function acceptInviteTransaction(
     const invite = inviteSnap.exists ? toInviteRecord(inviteSnap.data()!) : undefined;
     const state = invite ? await readMemberAddState(tx, db, invite.listId, uid) : null;
 
+    // このリンクで参加した本人が(まだメンバーのまま)もう一度開いたときは、使用済みの
+    // エラーではなくリストを開けるようにする。
+    if (invite?.status === "accepted" && invite.acceptedBy === uid && state?.memberExists) {
+      return { status: "already-member" as const, listId: invite.listId };
+    }
+
     const unavailable = classifyInvite(invite, state?.list, nowMs);
     if (unavailable !== null) {
       return { status: unavailable };
@@ -205,6 +223,7 @@ export async function acceptInviteTransaction(
     }
 
     writeMemberAdd(tx, db, listId, uid, "editor", displayName, memberState);
+    tx.update(inviteRef, { status: "accepted", acceptedBy: uid, acceptedAt: FieldValue.serverTimestamp() });
     tx.set(requestRef, { listId, createdAt: FieldValue.serverTimestamp() });
     return { status: "joined" as const, listId };
   });
