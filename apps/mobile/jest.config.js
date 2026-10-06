@@ -1,6 +1,8 @@
 module.exports = {
   preset: 'jest-expo',
   moduleNameMapper: {
+    '^@/assets/(.*)$': '<rootDir>/assets/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
     '^react-native-worklets$': require.resolve('react-native-worklets/lib/module/mock'),
     '\\.css$': '<rootDir>/jest/css-mock.js',
     '^@react-native-async-storage/async-storage$':
