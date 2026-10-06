@@ -13,7 +13,7 @@
 
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
-import { initializeApp } from 'firebase/app';
+import { deleteApp, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import {
   collection,
@@ -44,8 +44,14 @@ if (!firestoreHost || !authHost) {
 const [fsHost, fsPort] = firestoreHost.split(':');
 const [fnHost, fnPort] = functionsHost.split(':');
 
+// 再試行(runWithRetry)で新しいクライアントを作り直せるよう、試行ごとに別名のappにして
+// 作ったappを控えておく。
+let attempt = 1;
+const createdApps = [];
+
 function createClient(name, { signedIn = true } = {}) {
-  const app = initializeApp({ apiKey: 'fake-api-key', projectId: PROJECT_ID, authDomain: 'localhost' }, name);
+  const app = initializeApp({ apiKey: 'fake-api-key', projectId: PROJECT_ID, authDomain: 'localhost' }, `${name}-${attempt}`);
+  createdApps.push(app);
   const auth = getAuth(app);
   connectAuthEmulator(auth, `http://${authHost}`, { disableWarnings: true });
   const db = getFirestore(app);
@@ -134,7 +140,7 @@ async function main() {
   const c = createClient('user-c');
   const anonymous = createClient('anonymous', { signedIn: false });
 
-  console.log('AC-01 コア共有体験(Emulator・2ユーザー)');
+  console.log(`AC-01 コア共有体験(Emulator・3ユーザー、試行${attempt}回目)`);
   const { uid: uidA } = await signUp(a, 'たろう');
   const accountB = await signUp(b, 'はなこ');
   const uidB = accountB.uid;
@@ -391,7 +397,39 @@ async function main() {
   }
 }
 
-main()
+// CIのEmulatorで、Firestoreクライアントの購読ストリームがgRPCフレームのずれ
+// (RESOURCE_EXHAUSTED: Received message larger than max)で切れ、SDKが最大バックオフに
+// 入って以降の読取が「client is offline」(code: unavailable)になることが断続的に起きた。
+// 原因はEmulator/SDKの通信層で、アサーションの失敗とは別物のため、その場合だけ
+// 新しいクライアントで1回だけ全体をやり直す。アサーションの失敗は再試行しない。
+const MAX_ATTEMPTS = 2;
+
+function isTransportFailure(error) {
+  return error?.code === 'unavailable' && /offline/i.test(error?.message ?? '');
+}
+
+async function disposeClients() {
+  await Promise.allSettled(createdApps.splice(0).map((app) => deleteApp(app)));
+}
+
+async function runWithRetry() {
+  for (;;) {
+    try {
+      await main();
+      return;
+    } catch (error) {
+      await disposeClients();
+      if (!isTransportFailure(error) || attempt >= MAX_ATTEMPTS) {
+        throw error;
+      }
+      console.warn(`\n⚠ Firestoreクライアントの通信障害(${error.message})。新しいクライアントで1回だけ再試行します\n`);
+      results.length = 0;
+      attempt += 1;
+    }
+  }
+}
+
+runWithRetry()
   .then(() => {
     const failed = results.filter((r) => !r.ok);
     console.log(`\n${results.length - failed.length}/${results.length} 件成功`);

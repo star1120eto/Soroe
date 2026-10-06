@@ -66,3 +66,9 @@ pnpm --filter functions exec firebase emulators:exec --only auth,firestore,funct
 - **クライアントのキャッシュ**: 購読中のクエリと同じクエリを `getDocs` / `getDocsFromServer` で
   読むと、SDKが既存の購読結果を返しサーバーへ再問い合わせしないことがある。権限喪失の「新規読取」
   の確認は、購読を持たない別クライアントから行った(スクリプトの手順13)。
+- **CIでの通信障害と再試行**: GitHub ActionsのEmulatorで、Firestoreクライアントの購読ストリームが
+  `RESOURCE_EXHAUSTED: Received message larger than max`(gRPCフレームのずれ)で切れ、SDKが最大バックオフに
+  入って以降の読取が `client is offline`(`unavailable`)になる障害が断続的に起きた(ローカルでは再現せず、
+  原因はEmulator/SDKの通信層と見ており未特定)。アサーションの失敗とは別物のため、スクリプトは
+  Firestoreクライアントの `unavailable`(offline)のときだけ、新しいクライアントで**1回だけ**全体をやり直す。
+  アサーションの失敗は再試行しない。
