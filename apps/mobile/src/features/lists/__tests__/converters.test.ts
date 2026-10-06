@@ -1,11 +1,5 @@
 import { toListMember, toUserListRefs } from '../converters';
 
-// converters.tsはFirestoreのTimestamp型を判定に使うだけなので、ネイティブmoduleは差し替える。
-jest.mock('@react-native-firebase/firestore', () => {
-  class Timestamp {}
-  return { __esModule: true, default: { Timestamp } };
-});
-
 const validListRef = {
   name: '今週の買い物',
   type: 'shopping',
@@ -19,6 +13,14 @@ const validListRef = {
   archivedAt: null,
   deletedAt: null,
 };
+
+describe('timestamps from either SDK', () => {
+  it('reads a Timestamp-like object by its toMillis(), whichever SDK produced it', () => {
+    const member = toListMember('u1', 'list-1', { role: 'editor', joinedAt: { toMillis: () => 1234 } });
+
+    expect(member.joinedAt).toBe(1234);
+  });
+});
 
 describe('toListMember', () => {
   const base = { role: 'editor', joinedAt: 1 };
