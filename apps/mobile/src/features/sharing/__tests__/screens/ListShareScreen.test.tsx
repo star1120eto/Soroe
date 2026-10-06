@@ -177,6 +177,32 @@ describe('ListShareScreen', () => {
       expect(getByRole('button', { name: 'リンク2を取消' })).toBeTruthy();
     });
 
+    it('shows a freshly issued link as 7 days even when the screen was opened a while ago', async () => {
+      const MINUTE = 60 * 1000;
+      const DAY = 24 * 60 * MINUTE;
+      const openedAt = new Date(2026, 9, 7, 9, 0).getTime();
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(openedAt);
+      arrange();
+      let deliverInvites: (invites: ActiveInvite[]) => void = () => {};
+      jest.mocked(subscribeToActiveInvites).mockImplementation((_id, onChange) => {
+        deliverInvites = onChange;
+        onChange([]);
+        return jest.fn();
+      });
+      const { findByText } = await render(<ListShareScreen />);
+
+      // 画面を開いてから1時間後に発行したリンクは、画面を開いた時刻を基準にすると
+      // 残り7日と1時間になり「あと8日」と切り上がってしまう。
+      const issuedAt = openedAt + 60 * MINUTE;
+      nowSpy.mockReturnValue(issuedAt);
+      await act(async () => {
+        deliverInvites([{ inviteId: 'fresh', expiresAt: issuedAt + 7 * DAY }]);
+      });
+
+      expect(await findByText(/あと7日/)).toBeTruthy();
+      nowSpy.mockRestore();
+    });
+
     it('explains that a link is for one person and each person needs their own', async () => {
       arrange();
       const { getByText } = await render(<ListShareScreen />);

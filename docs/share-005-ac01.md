@@ -4,7 +4,7 @@
 |---|---|
 | 実施日 | 2026-10-07 |
 | 対象 | `soroe-implementation-backlog.md` SHARE-005 / `soroe-functional-specification.md` AC-01 |
-| 判定 | **Emulator上の3ユーザー通しは合格(19/19)。実機2台での確認は未実施** |
+| 判定 | **Emulator上の3ユーザー通しは合格(19/19)。iOS Simulator 2台での画面確認は合格。iPhone実機2台での確認は未実施** |
 | 実行環境 | Firebase Emulator(Auth / Firestore / Functions)+ Firebase JS Client SDK |
 
 ## 1. 未実施の範囲(要フォロー)
@@ -13,12 +13,11 @@
 (ENV-002、GitHub Issue #6)のためiOS実機ビルドを用意できない。そこで次の代替で確認した。
 
 - 実際のクライアントSDK(アプリと同じRules・Callable Functions・リアルタイム購読の経路)を
-  **3ユーザー分**(A: オーナー、B・C: 招待される側)起動し、画面操作を除く全経路を通した。
-- 画面(招待画面・共有メンバー画面・リスト詳細の権限喪失表示)は、Emulator上のFirebaseに接続した
-  Development Build(Android Emulator 2台、SPIKE-001と同じ構成)で目視確認する必要がある。
-  本記録の時点では画面の目視確認は実施していない。
+  **3ユーザー分**(A: オーナー、B・C: 招待される側)起動し、画面操作を除く全経路を通した(下記3章)。
+- **iOS Simulator 2台**(iPhone 17 Pro / iPhone 17)にDevelopment Buildを入れ、Firebase Emulatorへ
+  接続して、招待〜権限喪失の画面を目視した(下記3.1)。
 
-ENV-002の解消後に、実機2台で「作成→招待→受諾→追加→完了→権限喪失」を通し、本書へ追記すること。
+iPhone実機2台での確認は、ENV-002の解消後に同じ手順で行い、本書へ追記すること。
 
 ## 2. 実行方法
 
@@ -54,6 +53,51 @@ pnpm --filter functions exec firebase emulators:exec --only auth,firestore,funct
 | 16 | 削除されたBは、使用済みの同じリンクでは再参加できない(メンバーと招待リンクは別々に扱う) | 合格 |
 | 17 | 別の相手Cは、C向けに発行したリンクで参加できる。B向けのリンクはCにも使えない | 合格 |
 | 18 | Aの購読はBの削除後も影響を受けない | 合格 |
+
+### 3.1 iOS Simulator 2台での目視確認(2026-10-07)
+
+| # | 確認内容 | 結果 |
+|---|---|---|
+| 1 | A(オーナー)のメニューに「リストを編集/複製する/共有・メンバー/アーカイブする/削除する」が出る | 合格 |
+| 2 | 共有・メンバー画面に、メンバー(自分・オーナー)と未使用の招待リンクが期限つきで並び、リンクごとに「リンクNを取消」がある | 合格 |
+| 3 | 招待リンクを未認証で開くと、招待者名・リスト名・メンバー数だけのプレビューと「ログインして参加」が出る | 合格 |
+| 4 | 「ログインして参加」→ログイン画面に「招待を確認しました」が出て、ログイン→プロフィール設定のあと招待が自動で再開し「参加する」が出る | 合格 |
+| 5 | 「参加する」でBが編集者として参加し、リスト詳細が開く。担当者チップにA・Bの表示名が出る | 合格 |
+| 6 | Aの画面が自動で更新され、メンバーが2人になる。**使われたリンクは一覧から消える**(1回のみ有効) | 合格 |
+| 7 | Bが追加した項目がAの画面にリアルタイムで届く | 合格 |
+| 8 | AがBを管理→メンバーから削除→確認ダイアログ→削除すると、Bの画面が**自動で**「アクセスできなくなりました」に切り替わり、Aはメンバー1人に戻る | 合格 |
+| 9 | 削除されたBが使用済みの同じリンクを開くと「この招待は既に使用されました」で拒否される | 合格 |
+| 10 | 「招待リンクを発行して共有」でOSの共有シートが開き、招待文と新しいリンクが共有対象になる。未使用リンクは2本に増える | 合格 |
+
+目視では確認していない(描画テストと2ユーザー通しで代替): 所有権移譲、編集者の退出、招待の取消ボタン、
+Free上限到達時の導線、期限切れ・取消済みの表示。
+
+この確認で見つけた不具合は修正済み: 発行直後のリンクが「あと8日」と表示された(画面を開いた時刻で固定した
+`now` を使っていたため)。招待の購読が更新されるたびに `now` を取り直す。
+
+#### 再現手順(ローカル)
+
+```bash
+# Emulator(別ターミナル)
+pnpm --filter functions exec firebase emulators:start --only auth,firestore,functions --project soroe-1850a
+# iOS Development Build(初回のみ。ios/ は gitignore 済み)
+cd apps/mobile && npx expo prebuild --platform ios   # Podfile.properties.json に "ios.useFrameworks": "static" が必要(下記)
+# Metro(Emulatorへ向ける。Simulatorからホストはlocalhost)
+EXPO_PUBLIC_FIREBASE_EMULATOR_HOST=localhost npx expo start --dev-client --port 8081
+# 招待リンクを開く(2台目)
+xcrun simctl openurl <udid> "soroe://invite/<token>"
+```
+
+ログインは「メールで続ける」。確認コードはFunctions Emulatorのログ(`[ConsoleEmailProvider] OTP for ...`)に出る。
+
+#### iOSビルドで判明した前提(リポジトリには未反映、ENV-002で扱う)
+
+- RN Firebaseを使うため、Podを静的フレームワークにする設定(`ios.useFrameworks: static`、
+  `expo-build-properties` など)が要る。未設定だと `pod install` が失敗する。
+- Simulator向けでも**署名(ad-hocで可)が要る**。未署名(`CODE_SIGNING_ALLOWED=NO`)だと
+  Keychainにアクセスできず、Firebase Authが `17995 keychain` でサインインを保存できない。
+- シミュレーターへのキー入力は、日本語入力が有効だとローマ字がかなに変換される。英語キーボードのみに
+  設定し、連続入力は1回ずつ待つと確実。
 
 ## 4. 観測と注意
 

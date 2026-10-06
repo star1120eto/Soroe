@@ -47,8 +47,10 @@ export default function ListShareScreen() {
   const [loadError, setLoadError] = useState<'access-denied' | 'failed' | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  // 期限表示用の「現在」。再描画のたびに変わる値を直接使わず、画面表示時点で固定する。
-  const [now] = useState(() => Date.now());
+  // 期限表示用の「現在」。再描画のたびに変わる値を直接使わず、招待の購読が更新される
+  // たびに取り直す(画面を開いた時刻で固定すると、あとで発行したリンクが
+  // 「7日と数分」になり「あと8日」と切り上がってしまう)。
+  const [now, setNow] = useState(() => Date.now());
 
   const uid = profile?.uid ?? null;
   const isOwner = list != null && uid !== null && list.ownerId === uid;
@@ -73,7 +75,14 @@ export default function ListShareScreen() {
     if (!listId || !isOwner) {
       return;
     }
-    const unsubscribe = subscribeToActiveInvites(listId, setInvites, () => setInvites([]));
+    const unsubscribe = subscribeToActiveInvites(
+      listId,
+      (next) => {
+        setNow(Date.now());
+        setInvites(next);
+      },
+      () => setInvites([])
+    );
     return () => {
       unsubscribe();
       setInvites([]);
