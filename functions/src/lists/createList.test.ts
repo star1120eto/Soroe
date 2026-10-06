@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createListHandler } from "./createList";
 import * as entitlements from "./entitlements";
 import * as listStore from "./listStore";
+import * as profile from "../users/profile";
 
 vi.mock("./entitlements");
 vi.mock("./listStore");
+vi.mock("../users/profile");
 
 const VALID_INPUT = {
   name: "今週の買い物",
@@ -19,6 +21,7 @@ describe("createListHandler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(entitlements.getPlan).mockResolvedValue("free");
+    vi.mocked(profile.getDisplayName).mockResolvedValue("たろう");
   });
 
   it("creates a list and returns its id", async () => {
@@ -34,7 +37,8 @@ describe("createListHandler", () => {
       "uid-1",
       "req-1",
       { name: "今週の買い物", type: "shopping", color: "primary", icon: "shopping-cart-simple" },
-      "free"
+      "free",
+      "たろう"
     );
   });
 
@@ -70,7 +74,8 @@ describe("createListHandler", () => {
       "uid-1",
       "req-1",
       expect.anything(),
-      "premium"
+      "premium",
+      "たろう"
     );
   });
 

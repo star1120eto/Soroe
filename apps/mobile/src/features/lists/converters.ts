@@ -81,6 +81,7 @@ export function toListMember(uid: string, listId: string, data: FirestoreData): 
     listId,
     role: data.role,
     joinedAt: requireMillis(data.joinedAt, now),
+    displayName: data.displayName ?? null,
   });
 }
 
