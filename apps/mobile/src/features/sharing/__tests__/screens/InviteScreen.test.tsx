@@ -167,4 +167,46 @@ describe('InviteScreen', () => {
     expect(await findByText('週末のキャンプ')).toBeTruthy();
     expect(previewInvite).toHaveBeenCalledTimes(2);
   });
+
+  it('saves the token as soon as a signed-out visitor opens the link, even if the preview cannot load', async () => {
+    signedIn('unauthenticated');
+    jest.mocked(previewInvite).mockRejectedValue(new Error('offline'));
+    const { findByText } = await render(<InviteScreen />);
+
+    expect(await findByText('招待を確認できませんでした')).toBeTruthy();
+    expect(savePendingInviteToken).toHaveBeenCalledWith(TOKEN);
+  });
+
+  it('does not save a token for a signed-in user (nothing to resume)', async () => {
+    signedIn('authenticated');
+    const { findByText } = await render(<InviteScreen />);
+    await findByText('週末のキャンプ');
+
+    expect(savePendingInviteToken).not.toHaveBeenCalled();
+  });
+
+  it('does not save a malformed token', async () => {
+    signedIn('unauthenticated');
+    mockParams = { token: 'not-a-token' };
+    const { findByText } = await render(<InviteScreen />);
+    await findByText('招待が見つかりません');
+
+    expect(savePendingInviteToken).not.toHaveBeenCalled();
+  });
+
+  describe('leaving the screen', () => {
+    it.each([
+      ['unauthenticated', '/login'],
+      ['needsProfile', '/profile-setup'],
+      ['authenticated', '/'],
+    ] as const)('goes to the right place for a %s user (%s), never to a protected route', async (status, destination) => {
+      signedIn(status);
+      jest.mocked(previewInvite).mockResolvedValue({ status: 'expired' });
+      const { findByRole } = await render(<InviteScreen />);
+
+      await fireEvent.press(await findByRole('button', { name: '閉じる' }));
+
+      expect(mockRouter.replace).toHaveBeenCalledWith(destination);
+    });
+  });
 });

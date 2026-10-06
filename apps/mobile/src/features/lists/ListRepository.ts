@@ -23,7 +23,7 @@ import {
   type UserListRef,
 } from '@soroe/shared';
 
-import { toList, toListItem, toListMember, toUserListRef } from './converters';
+import { toList, toListItem, toListMember, toUserListRefs } from './converters';
 
 // Firestoreへの唯一の窓口。soroe-technology-stack-evaluation.md 5章に従い、
 // オフラインで完結してよい項目CRUDだけをclient writeにし、上限・権利・所有権が
@@ -61,7 +61,7 @@ export function subscribeToUserLists(
     .where('archivedAt', '==', null)
     .orderBy('updatedAt', 'desc')
     .onSnapshot(
-      (snapshot) => onChange(snapshot.docs.map((doc) => toUserListRef(doc.id, doc.data()))),
+      (snapshot) => onChange(toUserListRefs(snapshot.docs)),
       onError
     );
 }
@@ -90,7 +90,7 @@ export function subscribeToArchivedOrDeletedLists(
   return listRefsCollection(uid)
     .where('archivedAt', '!=', null)
     .onSnapshot(
-      (snapshot) => onChange(snapshot.docs.map((doc) => toUserListRef(doc.id, doc.data()))),
+      (snapshot) => onChange(toUserListRefs(snapshot.docs)),
       onError
     );
 }

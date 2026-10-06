@@ -223,7 +223,12 @@ export default function ListShareScreen() {
                 <Text style={[Typography.caption, styles.secondary]}>{roleLabel(member.role)}</Text>
               </View>
               {isOwner && member.uid !== profile.uid ? (
-                <Button label="管理" onPress={() => openMemberMenu(member)} variant="secondary" disabled={busy} />
+                <Button
+                  label={`${memberDisplayName(member, profile.uid)}を管理`}
+                  onPress={() => openMemberMenu(member)}
+                  variant="secondary"
+                  disabled={busy}
+                />
               ) : null}
             </View>
           ))}

@@ -127,7 +127,9 @@ describe('ListShareScreen', () => {
       arrange();
       const { getAllByRole, queryByRole } = await render(<ListShareScreen />);
 
-      expect(getAllByRole('button', { name: '管理' })).toHaveLength(1);
+      // 同じ文言の「管理」が並ぶと支援技術がどのメンバーか区別できないため、名前を含める。
+      expect(getAllByRole('button', { name: 'はなこを管理' })).toHaveLength(1);
+      expect(queryByRole('button', { name: /たろう.*を管理/ })).toBeNull();
       expect(queryByRole('button', { name: 'リストから退出' })).toBeNull();
     });
 
@@ -189,7 +191,7 @@ describe('ListShareScreen', () => {
       arrange();
       const { getByRole } = await render(<ListShareScreen />);
 
-      await fireEvent.press(getByRole('button', { name: '管理' }));
+      await fireEvent.press(getByRole('button', { name: 'はなこを管理' }));
       await pressAlertButton('メンバーから削除');
       expect(removeMember).not.toHaveBeenCalled();
       await pressAlertButton('削除する');
@@ -201,7 +203,7 @@ describe('ListShareScreen', () => {
       arrange();
       const { getByRole } = await render(<ListShareScreen />);
 
-      await fireEvent.press(getByRole('button', { name: '管理' }));
+      await fireEvent.press(getByRole('button', { name: 'はなこを管理' }));
       await pressAlertButton('オーナーにする');
       const [title, message] = jest.mocked(Alert.alert).mock.calls.at(-1)!;
       expect(title).toContain('はなこ');
@@ -242,7 +244,7 @@ describe('ListShareScreen', () => {
 
       expect(getByRole('button', { name: 'リストから退出' })).toBeTruthy();
       expect(queryByRole('button', { name: '招待リンクを共有' })).toBeNull();
-      expect(queryByRole('button', { name: '管理' })).toBeNull();
+      expect(queryByRole('button', { name: /を管理$/ })).toBeNull();
       expect(queryByText('家族を招待')).toBeNull();
       expect(subscribeToActiveInvites).not.toHaveBeenCalled();
     });

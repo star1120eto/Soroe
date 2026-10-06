@@ -55,16 +55,22 @@ export default function InviteScreen() {
     };
   }, [token, isTokenWellFormed, reloadKey]);
 
-  const goHome = () => router.replace('/');
-
-  const continueToSignIn = async () => {
-    if (!token) {
-      return;
+  // 未認証でリンクを開いた時点でトークンを保持する。プレビューの取得に失敗しても(オフライン等)
+  // ログイン後にこの招待へ戻れるよう、画面操作を待たずに保存する。ログイン後は
+  // (app)/_layout.tsxが保存済みトークンからこの画面を再開する。
+  useEffect(() => {
+    if (status !== 'authenticated' && token && isTokenWellFormed) {
+      savePendingInviteToken(token).catch(() => {
+        /* 保存できなくても、プレビューとログインへの導線は使える */
+      });
     }
-    // ログイン後、(app)/_layout.tsxが保存済みトークンからこの画面を再開する。
-    await savePendingInviteToken(token);
-    router.replace(status === 'needsProfile' ? '/profile-setup' : '/login');
-  };
+  }, [status, token, isTokenWellFormed]);
+
+  // 未認証・プロフィール未作成のユーザーにとって'/'(リスト一覧)は保護されたルートで
+  // 到達できないため、画面を離れる行き先はセッションの状態で決める。
+  const signInDestination = status === 'needsProfile' ? '/profile-setup' : '/login';
+  const goHome = () => router.replace(status === 'authenticated' ? '/' : signInDestination);
+  const continueToSignIn = () => router.replace(signInDestination);
 
   const accept = async () => {
     if (!token || accepting) {
