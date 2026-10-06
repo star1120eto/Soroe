@@ -136,6 +136,7 @@ describe('InviteScreen', () => {
   it.each([
     ['expired', '招待の有効期限が切れています'],
     ['revoked', 'この招待は取り消されました'],
+    ['used', 'この招待は既に使用されました'],
     ['list-deleted', 'このリストは削除されました'],
     ['not-found', '招待が見つかりません'],
   ] as const)('shows %s as a problem instead of the preview', async (status, title) => {

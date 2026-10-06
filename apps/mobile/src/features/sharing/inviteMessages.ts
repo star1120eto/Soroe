@@ -9,6 +9,10 @@ const REQUEST_NEW_LINK = '招待した人に、新しいリンクの送信を依
 const MESSAGES: Record<InviteProblem, { title: string; description: string }> = {
   expired: { title: '招待の有効期限が切れています', description: REQUEST_NEW_LINK },
   revoked: { title: 'この招待は取り消されました', description: REQUEST_NEW_LINK },
+  used: {
+    title: 'この招待は既に使用されました',
+    description: `招待リンクは1人に1回だけ使えます。${REQUEST_NEW_LINK}`,
+  },
   'list-deleted': {
     title: 'このリストは削除されました',
     description: '参加できません。招待した人に確認してください。',

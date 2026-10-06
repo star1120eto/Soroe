@@ -131,16 +131,19 @@ function newItem(name, createdBy, sortOrder) {
 async function main() {
   const a = createClient('user-a');
   const b = createClient('user-b');
+  const c = createClient('user-c');
   const anonymous = createClient('anonymous', { signedIn: false });
 
   console.log('AC-01 コア共有体験(Emulator・2ユーザー)');
   const { uid: uidA } = await signUp(a, 'たろう');
   const accountB = await signUp(b, 'はなこ');
   const uidB = accountB.uid;
+  const { uid: uidC } = await signUp(c, 'じろう');
   console.log(`  A=${uidA}  B=${uidB}`);
 
   let listId;
-  let token;
+  let token; // Bに渡すリンク
+  let tokenForC; // Cに渡す別のリンク(リンクは1回のみ有効で、人ごとに発行する)
   let inviteId;
   const seenByA = new Map(); // itemId -> データ。Aの購読が受け取った状態
   let unsubscribeA = () => {};
@@ -177,7 +180,7 @@ async function main() {
       await waitFor('A の購読に「テント」', async () => [...seenByA.values()], (items) => items.some((i) => i.name === 'テント'));
     });
 
-    await step('A が招待リンクを発行できる(createInvite、トークンはハッシュで保存)', async () => {
+    await step('A が招待リンクを発行できる(トークンはハッシュで保存)。人ごとに別のリンクを発行でき、先のリンクは取り消されない', async () => {
       token = randomBytes(32).toString('hex');
       const response = await a.call('createInvite', { listId, token });
       inviteId = response.inviteId;
@@ -187,8 +190,11 @@ async function main() {
       assert(remaining > sevenDays - 60_000 && remaining <= sevenDays, '有効期限は約7日');
       const stored = await getDoc(doc(a.db, 'invites', inviteId));
       assert(!JSON.stringify(stored.data()).includes(token), '平文トークンは保存されない');
+
+      tokenForC = randomBytes(32).toString('hex');
+      await a.call('createInvite', { listId, token: tokenForC });
       const own = await getDocs(query(collection(a.db, 'invites'), where('listId', '==', listId), where('status', '==', 'active')));
-      assert(own.size === 1, 'オーナーは自分のリストの有効な招待を読める');
+      assert(own.size === 2, 'オーナーは自分のリストの有効な招待(2本)を読める。2本目の発行で1本目は取り消されない');
     });
 
     await step('未認証でもプレビューが見られる(リスト名・招待者名・メンバー数のみ)', async () => {
@@ -228,6 +234,13 @@ async function main() {
       assert(member.data()?.displayName === 'はなこ', 'B の表示名が member に保存される');
       const listRef = await getDoc(doc(b.db, 'users', uidB, 'listRefs', listId));
       assert(listRef.exists() && listRef.data().role === 'editor', 'B の一覧参照が作られる');
+    });
+
+    await step('使われたリンクは失効し(1回のみ有効)、別の人向けのリンクは有効のまま', async () => {
+      const active = await getDocs(query(collection(a.db, 'invites'), where('listId', '==', listId), where('status', '==', 'active')));
+      assert(active.size === 1, '有効な招待は C 向けの1本だけ');
+      const used = await getDoc(doc(a.db, 'invites', inviteId));
+      assert(used.data().status === 'accepted' && used.data().acceptedBy === uidB, 'B が使ったリンクは accepted');
     });
 
     await step('A・B 双方の一覧参照の memberCount が 2 になる', async () => {
@@ -324,6 +337,18 @@ async function main() {
       assert(refA.data().memberCount === 1, 'A の memberCount は 1 に戻る');
     });
 
+    await step('削除された B は、使用済みの同じリンクでは再参加できない(メンバーと招待リンクは別々に扱う)', async () => {
+      const again = await b.call('acceptInvite', { token, requestId: randomUUID() });
+      assert(again.status === 'used', `used (got ${again.status})`);
+      let denied = false;
+      try {
+        await getDocFromServer(doc(b.db, 'lists', listId));
+      } catch (error) {
+        denied = error?.code === 'permission-denied';
+      }
+      assert(denied, '再参加できていない(読めない)');
+    });
+
     await step('購読中だった B の端末は、メンバー一覧の購読で権限喪失を検知できる', async () => {
       // 実Firestoreでは購読中のリスナーはサーバーが次の更新を配信する際にRulesを再評価し
       // permission-deniedで終了する。メンバー一覧は削除そのものが変更になるため最初に届く。
@@ -342,6 +367,17 @@ async function main() {
       );
       assert(!itemNamesSeenByB.has('削除後にAが追加'), '削除後の項目名が B に配信されていない');
       console.log(`      B の購読エラー: ${bErrors.map((e) => `${e.source}=${e.code}`).join(', ')}`);
+    });
+
+    await step('別の相手 C は、C 向けに発行したリンクで参加できる', async () => {
+      const response = await c.call('acceptInvite', { token: tokenForC, requestId: randomUUID() });
+      assert(response.status === 'joined', `joined (got ${response.status})`);
+      const member = await getDoc(doc(c.db, 'lists', listId, 'members', uidC));
+      assert(member.data()?.displayName === 'じろう', 'C の表示名が member に保存される');
+      await waitFor('A の memberCount', async () => (await getDoc(doc(a.db, 'users', uidA, 'listRefs', listId))).data(), (d) => d?.memberCount === 2);
+      // B 向けのリンクは C にも使えない。
+      const reuse = await c.call('acceptInvite', { token, requestId: randomUUID() });
+      assert(reuse.status === 'used', `B 向けのリンクは used (got ${reuse.status})`);
     });
 
     await step('A の購読は B の削除後も影響を受けず、項目を見続けられる', async () => {

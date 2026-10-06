@@ -81,7 +81,12 @@ export default function ListShareScreen() {
   }, [listId, isOwner]);
 
   const sortedMembers = useMemo(() => sortMembers(members ?? []), [members]);
-  const activeInvites = invites.filter((invite) => isInviteActive(invite, now));
+  // 期限が近い順に並べ、番号でどのリンクかを区別する(リンクの平文は保存していないため
+  // 画面からは中身を再表示できない)。
+  const activeInvites = useMemo(
+    () => invites.filter((invite) => isInviteActive(invite, now)).sort((a, b) => a.expiresAt - b.expiresAt),
+    [invites, now]
+  );
 
   if (!profile) {
     return <Redirect href="/" />;
@@ -104,8 +109,8 @@ export default function ListShareScreen() {
       if (!list) {
         return;
       }
-      // トークンは共有のたびに新しく生成する。createInviteの冪等性キーを兼ね、
-      // 同じリストの以前の有効な招待はサーバーが同時に取り消す。
+      // トークンは共有のたびに新しく生成する(createInviteの冪等性キーを兼ねる)。
+      // リンクは1回のみ有効で人ごとに発行するため、以前の招待は取り消さない。
       const token = generateInviteToken();
       await createInvite({ listId: list.id, token });
       await Share.share({ message: buildInviteShareMessage(list.name, buildInviteUrl(token)) });
@@ -241,25 +246,26 @@ export default function ListShareScreen() {
               <Banner message="アーカイブ中のリストには招待できません。アクティブに戻してください。" variant="warning" />
             ) : (
               <>
-                {activeInvites.map((invite) => (
+                {activeInvites.map((invite, index) => (
                   <View key={invite.inviteId} style={styles.inviteRow}>
                     <Icon name="link-simple" color={Colors.primaryStrong} size={24} />
                     <View style={styles.memberText}>
-                      <Text style={[Typography.body, styles.memberName]}>招待リンクを発行済み</Text>
+                      <Text style={[Typography.body, styles.memberName]}>招待リンク{index + 1}(未使用)</Text>
                       <Text style={[Typography.caption, styles.secondary]}>
                         {formatInviteExpiry(invite.expiresAt, now)}
                       </Text>
                     </View>
-                    <Button label="取消" onPress={() => confirmRevoke(invite)} variant="secondary" disabled={busy} />
+                    <Button
+                      label={`リンク${index + 1}を取消`}
+                      onPress={() => confirmRevoke(invite)}
+                      variant="secondary"
+                      disabled={busy}
+                    />
                   </View>
                 ))}
-                <Button
-                  label={activeInvites.length > 0 ? 'リンクを再発行して共有' : '招待リンクを共有'}
-                  onPress={shareInviteLink}
-                  loading={busy}
-                />
+                <Button label="招待リンクを発行して共有" onPress={shareInviteLink} loading={busy} />
                 <Text style={[Typography.caption, styles.secondary]}>
-                  リンクは7日間有効です。再発行すると以前のリンクは使えなくなります。招待にはオンライン接続が必要です。
+                  リンクは1人用で、参加すると使えなくなります。複数の人を招待するときは、人ごとにリンクを発行してください。有効期限は7日間です。招待にはオンライン接続が必要です。
                 </Text>
               </>
             )}

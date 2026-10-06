@@ -3,6 +3,7 @@ import { describeInviteProblem, type InviteProblem } from '../inviteMessages';
 const ALL_PROBLEMS: InviteProblem[] = [
   'expired',
   'revoked',
+  'used',
   'list-deleted',
   'list-archived',
   'not-found',
@@ -18,9 +19,15 @@ describe('describeInviteProblem', () => {
     expect(description.length).toBeGreaterThan(0);
   });
 
-  it('tells the user to ask for a new link when the invite expired or was revoked', () => {
+  it('tells the user to ask for a new link when the invite expired, was revoked or was already used', () => {
     expect(describeInviteProblem('expired').description).toContain('新しいリンク');
     expect(describeInviteProblem('revoked').description).toContain('新しいリンク');
+    expect(describeInviteProblem('used').description).toContain('新しいリンク');
+  });
+
+  it('explains that an invite link works for one person only', () => {
+    expect(describeInviteProblem('used').title).toContain('使用');
+    expect(describeInviteProblem('used').description).toContain('1人');
   });
 
   it('explains the Free limit and the way out (archive an existing list)', () => {

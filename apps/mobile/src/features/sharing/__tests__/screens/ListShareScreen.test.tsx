@@ -137,7 +137,7 @@ describe('ListShareScreen', () => {
       arrange();
       const { getByRole } = await render(<ListShareScreen />);
 
-      await fireEvent.press(getByRole('button', { name: '招待リンクを共有' }));
+      await fireEvent.press(getByRole('button', { name: '招待リンクを発行して共有' }));
 
       const token = 'ab'.repeat(32);
       await waitFor(() => expect(Share.share).toHaveBeenCalled());
@@ -152,35 +152,78 @@ describe('ListShareScreen', () => {
       jest.mocked(createInvite).mockRejectedValue({ code: 'permission-denied', message: 'オーナーだけが招待を作成できます' });
       const { getByRole, findByText } = await render(<ListShareScreen />);
 
-      await fireEvent.press(getByRole('button', { name: '招待リンクを共有' }));
+      await fireEvent.press(getByRole('button', { name: '招待リンクを発行して共有' }));
 
       expect(await findByText('オーナーだけが招待を作成できます')).toBeTruthy();
       expect(Share.share).not.toHaveBeenCalled();
     });
 
-    it('shows an issued invite with its expiry, and reissuing says the old link stops working', async () => {
-      arrange({ invites: [{ inviteId: 'hash', expiresAt: Date.now() + 3 * 24 * 60 * 60 * 1000 }] });
+    it('lists each outstanding single-use link with its expiry and its own cancel button', async () => {
+      const day = 24 * 60 * 60 * 1000;
+      arrange({
+        invites: [
+          { inviteId: 'hash-b', expiresAt: Date.now() + 5 * day },
+          { inviteId: 'hash-a', expiresAt: Date.now() + 3 * day },
+        ],
+      });
       const { getByText, getByRole } = await render(<ListShareScreen />);
 
-      expect(getByText('招待リンクを発行済み')).toBeTruthy();
+      // 期限が近い順に番号を振り、取消ボタンはどのリンクか区別できる名前にする。
+      expect(getByText('招待リンク1(未使用)')).toBeTruthy();
       expect(getByText(/あと3日/)).toBeTruthy();
-      expect(getByRole('button', { name: 'リンクを再発行して共有' })).toBeTruthy();
-      expect(getByText(/以前のリンクは使えなくなります/)).toBeTruthy();
+      expect(getByText('招待リンク2(未使用)')).toBeTruthy();
+      expect(getByText(/あと5日/)).toBeTruthy();
+      expect(getByRole('button', { name: 'リンク1を取消' })).toBeTruthy();
+      expect(getByRole('button', { name: 'リンク2を取消' })).toBeTruthy();
+    });
+
+    it('explains that a link is for one person and each person needs their own', async () => {
+      arrange();
+      const { getByText } = await render(<ListShareScreen />);
+
+      expect(getByText(/1人用/)).toBeTruthy();
+      expect(getByText(/人ごとにリンクを発行/)).toBeTruthy();
+      expect(getByText(/7日間/)).toBeTruthy();
+    });
+
+    it('issues a new link without touching the outstanding ones', async () => {
+      arrange({ invites: [{ inviteId: 'hash-a', expiresAt: Date.now() + 1000 * 60 * 60 }] });
+      const { getByRole } = await render(<ListShareScreen />);
+
+      await fireEvent.press(getByRole('button', { name: '招待リンクを発行して共有' }));
+
+      await waitFor(() => expect(Share.share).toHaveBeenCalled());
+      expect(createInvite).toHaveBeenCalledTimes(1);
+      expect(revokeInvite).not.toHaveBeenCalled();
+    });
+
+    it('shows the server message when the cap of outstanding links is reached', async () => {
+      arrange();
+      jest.mocked(createInvite).mockRejectedValue({
+        code: 'failed-precondition',
+        message: '有効な招待リンクが上限に達しています。使わないリンクを取り消してください',
+      });
+      const { getByRole, findByText } = await render(<ListShareScreen />);
+
+      await fireEvent.press(getByRole('button', { name: '招待リンクを発行して共有' }));
+
+      expect(await findByText(/上限に達しています/)).toBeTruthy();
+      expect(Share.share).not.toHaveBeenCalled();
     });
 
     it('ignores an invite that has already expired', async () => {
       arrange({ invites: [{ inviteId: 'hash', expiresAt: Date.now() - 1000 }] });
       const { queryByText, getByRole } = await render(<ListShareScreen />);
 
-      expect(queryByText('招待リンクを発行済み')).toBeNull();
-      expect(getByRole('button', { name: '招待リンクを共有' })).toBeTruthy();
+      expect(queryByText(/招待リンク1/)).toBeNull();
+      expect(getByRole('button', { name: '招待リンクを発行して共有' })).toBeTruthy();
     });
 
     it('revokes an invite only after confirmation', async () => {
       arrange({ invites: [{ inviteId: 'hash', expiresAt: Date.now() + 1000 * 60 * 60 }] });
       const { getByRole } = await render(<ListShareScreen />);
 
-      await fireEvent.press(getByRole('button', { name: '取消' }));
+      await fireEvent.press(getByRole('button', { name: 'リンク1を取消' }));
       expect(revokeInvite).not.toHaveBeenCalled();
       await pressAlertButton('取り消す');
 
@@ -233,7 +276,7 @@ describe('ListShareScreen', () => {
       const { getByText, queryByRole } = await render(<ListShareScreen />);
 
       expect(getByText(/アーカイブ中のリストには招待できません/)).toBeTruthy();
-      expect(queryByRole('button', { name: '招待リンクを共有' })).toBeNull();
+      expect(queryByRole('button', { name: '招待リンクを発行して共有' })).toBeNull();
     });
   });
 
@@ -243,7 +286,7 @@ describe('ListShareScreen', () => {
       const { getByRole, queryByRole, queryByText } = await render(<ListShareScreen />);
 
       expect(getByRole('button', { name: 'リストから退出' })).toBeTruthy();
-      expect(queryByRole('button', { name: '招待リンクを共有' })).toBeNull();
+      expect(queryByRole('button', { name: '招待リンクを発行して共有' })).toBeNull();
       expect(queryByRole('button', { name: /を管理$/ })).toBeNull();
       expect(queryByText('家族を招待')).toBeNull();
       expect(subscribeToActiveInvites).not.toHaveBeenCalled();
