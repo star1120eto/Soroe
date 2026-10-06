@@ -126,8 +126,13 @@ export default function ListDetailScreen() {
     return subscribeToListMembers(
       listId,
       (next) => setMembers(next),
-      () => {
-        /* 担当者フィルターの表示専用データのため、失敗しても画面は継続する */
+      (error) => {
+        // 担当者フィルターの表示専用データのため、一時的な失敗なら画面は継続する。
+        // ただし自分のmemberが削除されるとmembersの購読が真っ先に結果を変えて
+        // permission-deniedになるため、権限喪失の最初のシグナルとして使う。
+        if (isAccessDeniedError(error)) {
+          setAccessLost(true);
+        }
       }
     );
   }, [listId]);
