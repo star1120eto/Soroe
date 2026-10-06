@@ -15,6 +15,7 @@ export { requestEmailOtp } from "./emailOtp/requestEmailOtp";
 export { verifyEmailOtp } from "./emailOtp/verifyEmailOtp";
 export { createList } from "./lists/createList";
 export { syncListRef } from "./lists/syncListRef";
+export { syncListItemCounts } from "./lists/syncListItemCounts";
 export { archiveList } from "./lists/archiveList";
 export { deleteList } from "./lists/deleteList";
 export { unarchiveList } from "./lists/unarchiveList";
