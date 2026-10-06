@@ -22,3 +22,7 @@ export { unarchiveList } from "./lists/unarchiveList";
 export { restoreList } from "./lists/restoreList";
 export { duplicateList } from "./lists/duplicateList";
 export { purgeExpiredDeletedLists } from "./lists/purgeExpiredDeletedLists";
+export { createInvite } from "./invites/createInvite";
+export { revokeInvite } from "./invites/revokeInvite";
+export { getInvitePreview } from "./invites/getInvitePreview";
+export { acceptInvite } from "./invites/acceptInvite";
