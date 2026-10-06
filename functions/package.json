@@ -9,8 +9,8 @@
   "scripts": {
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --exclude 'src/rules/**'",
-    "test:rules": "firebase emulators:exec --only firestore 'vitest run src/rules'",
+    "test": "vitest run --exclude 'src/rules/**' --exclude 'src/integration/**'",
+    "test:rules": "firebase emulators:exec --only firestore 'vitest run src/rules src/integration'",
     "serve": "pnpm build && firebase emulators:start --only functions",
     "shell": "pnpm build && firebase functions:shell",
     "deploy": "firebase deploy --only functions"
