@@ -56,6 +56,8 @@ import {
 } from '@/features/lists/itemSections';
 import { parseQuickAddInput } from '@/features/lists/quickAddParser';
 import { useSession } from '@/features/session/SessionProvider';
+import { isAccessDeniedError } from '@/features/sharing/accessErrors';
+import { assigneeChipLabel } from '@/features/sharing/memberLabels';
 
 // itemsSnapshotがnullの間の`?? []`が毎レンダー新しい配列になり、それに依存する
 // useMemoが無駄に再計算されるのを避けるための安定した既定値。
@@ -72,6 +74,8 @@ export default function ListDetailScreen() {
   const [listError, setListError] = useState<string | null>(null);
   const [itemsSnapshot, setItemsSnapshot] = useState<ListItemsSnapshot | null>(null);
   const [itemsError, setItemsError] = useState<string | null>(null);
+  // 削除・退出でmembersから外れると購読がpermission-deniedで終了する(SHARE-004)。
+  const [accessLost, setAccessLost] = useState(false);
   const [members, setMembers] = useState<ListMember[]>([]);
 
   const [quickAddText, setQuickAddText] = useState('');
@@ -88,7 +92,13 @@ export default function ListDetailScreen() {
     return subscribeToList(
       listId,
       (next) => setList(next),
-      () => setListError('リストを読み込めませんでした')
+      (error) => {
+        if (isAccessDeniedError(error)) {
+          setAccessLost(true);
+        } else {
+          setListError('リストを読み込めませんでした');
+        }
+      }
     );
   }, [listId]);
 
@@ -99,7 +109,13 @@ export default function ListDetailScreen() {
     return subscribeToListItems(
       listId,
       (snapshot) => setItemsSnapshot(snapshot),
-      () => setItemsError('項目を読み込めませんでした')
+      (error) => {
+        if (isAccessDeniedError(error)) {
+          setAccessLost(true);
+        } else {
+          setItemsError('項目を読み込めませんでした');
+        }
+      }
     );
   }, [listId]);
 
@@ -234,18 +250,21 @@ export default function ListDetailScreen() {
             () => {}
           ),
       },
+      // メンバー一覧・招待・退出。オーナーと編集者で画面内の操作が変わる。
+      { text: '共有・メンバー', onPress: () => router.push({ pathname: '/list-share', params: { listId: list.id } }) },
     ];
-    if (isOwner && !isReadOnly) {
-      // リスト名・色・アイコンの直接更新はfirestore.rulesでオーナーのみに
-      // 限定している(EPIC-04のSHARE実装まではeditorも保有者=自分のみだが、
-      // 将来共有が増えても非オーナーの編集が黙って失敗しないようにする)。
-      // アーカイブ中はRules側もresource.data.archivedAt==nullを要求して
-      // おり(LIST-05の読み取り専用)、この操作を出しても保存が黙って
-      // 拒否されるだけなのでメニューからも外す。
+    if (!isReadOnly) {
+      // リスト名・色・アイコンはメンバー(オーナー・編集者)が直接更新できる
+      // (仕様2.3、firestore.rules)。アーカイブ中はRules側もresource.data.archivedAt
+      // ==nullを要求しており(LIST-05の読み取り専用)、この操作を出しても保存が
+      // 黙って拒否されるだけなのでメニューからも外す。
       buttons.unshift({
         text: 'リストを編集',
         onPress: () => router.push({ pathname: '/new-list', params: { listId: list.id } }),
       });
+    }
+    if (isOwner && !isReadOnly) {
+      // アーカイブ・削除はオーナーのみ(仕様2.3)。
       buttons.push({
         text: 'アーカイブする',
         onPress: () => runOwnerAction(() => archiveList(list.id), () => router.back()),
@@ -255,6 +274,19 @@ export default function ListDetailScreen() {
     buttons.push({ text: 'キャンセル', style: 'cancel' });
     Alert.alert(list.name, undefined, buttons);
   };
+
+  if (accessLost) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ErrorState
+          title="アクセスできなくなりました"
+          description="このリストのメンバーではなくなりました"
+          retryLabel="リスト一覧へ"
+          onRetry={() => router.dismissTo('/')}
+        />
+      </SafeAreaView>
+    );
+  }
 
   if (listError || itemsError) {
     return (
@@ -338,7 +370,7 @@ export default function ListDetailScreen() {
               ? members.map((member) => (
                   <Chip
                     key={member.uid}
-                    label={member.uid === uid ? '自分' : 'メンバー'}
+                    label={assigneeChipLabel(member, uid)}
                     variant={filters.assigneeId === member.uid ? 'selected' : 'default'}
                     onPress={() =>
                       setFilters((current) => ({
