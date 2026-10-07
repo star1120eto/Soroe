@@ -1,0 +1,60 @@
+# ローカル開発用: Firebase EmulatorとWeb版をコンテナで起動する。
+#   docker compose up --build
+# 手順・ポート・iOS Simulatorからの使い方は docs/local-dev-containers.md。
+# ポートはホストの127.0.0.1にだけ公開する(LANへは晒さない)。
+name: soroe
+
+x-image: &image
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  image: soroe-dev:local
+
+services:
+  emulators:
+    <<: *image
+    command: ["entrypoint-emulators.sh"]
+    ports:
+      - "127.0.0.1:4000:4000" # Emulator UI
+      - "127.0.0.1:4400:4400" # Emulator Hub(UIが使う)
+      - "127.0.0.1:5001:5001" # Functions
+      - "127.0.0.1:8080:8080" # Firestore
+      - "127.0.0.1:9099:9099" # Auth
+    volumes:
+      # ルール・Functions・共有スキーマの変更は、コンテナを再起動すると反映される。
+      - ./firestore.rules:/app/firestore.rules:ro
+      - ./firestore.indexes.json:/app/firestore.indexes.json:ro
+      - ./functions/src:/app/functions/src:ro
+      - ./packages/shared/src:/app/packages/shared/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 60s
+
+  web:
+    <<: *image
+    command: ["entrypoint-web.sh"]
+    ports:
+      - "127.0.0.1:8082:8082"
+    environment:
+      # ブラウザから見たEmulatorの場所(上でホストへ公開したポート)。
+      EXPO_PUBLIC_FIREBASE_EMULATOR_HOST: "127.0.0.1"
+      EXPO_PUBLIC_APP_ENV: development
+      # Emulator接続では値は使われないが、Web版の初期化が非空の値を要求する。
+      # projectIdはEmulatorのプロジェクトIDと揃える。
+      EXPO_PUBLIC_FIREBASE_WEB_API_KEY: fake-api-key
+      EXPO_PUBLIC_FIREBASE_WEB_AUTH_DOMAIN: localhost
+      EXPO_PUBLIC_FIREBASE_WEB_PROJECT_ID: soroe-1850a
+      EXPO_PUBLIC_FIREBASE_WEB_STORAGE_BUCKET: soroe-1850a.appspot.com
+      EXPO_PUBLIC_FIREBASE_WEB_MESSAGING_SENDER_ID: "000000000000"
+      EXPO_PUBLIC_FIREBASE_WEB_APP_ID: "1:000000000000:web:0000000000000000"
+      EXPO_NO_TELEMETRY: "1"
+    volumes:
+      - ./apps/mobile/src:/app/apps/mobile/src
+      - ./apps/mobile/assets:/app/apps/mobile/assets:ro
+      - ./packages/shared/src:/app/packages/shared/src:ro
+    depends_on:
+      emulators:
+        condition: service_healthy
