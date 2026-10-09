@@ -67,9 +67,13 @@ pnpm run seed -- a@example.test --name たろう   # 表示名を指定(ユー�
 
 ```bash
 cd apps/mobile
-# iOS Simulator: localhost。Android Emulator: 10.0.2.2
-EXPO_PUBLIC_FIREBASE_EMULATOR_HOST=localhost npx expo start --dev-client --port 8081
+# iOS Simulator: 127.0.0.1。Android Emulator: 10.0.2.2
+EXPO_PUBLIC_FIREBASE_EMULATOR_HOST=127.0.0.1 npx expo start --dev-client --port 8081
 ```
+
+iOS Simulatorでは `localhost` ではなく **`127.0.0.1`** を指定する。`localhost` はIPv6(`::1`)へ先に
+解決され、コンテナの公開ポート(IPv4のみ)につながらない。Firestoreの通信はIPv4へ切り替わらないため、
+書込が届かず「未同期の変更があります」の帯が出続ける。
 
 ネイティブのDevelopment Buildの作り方と、iOSで必要な設定(Podの静的フレームワーク設定・署名)は
 `docs/share-005-ac01.md` を参照。Web版とネイティブ版は同じEmulatorを見るので、ブラウザのユーザーと
