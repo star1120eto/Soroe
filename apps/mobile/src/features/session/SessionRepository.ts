@@ -41,3 +41,7 @@ export async function createUserProfile(
 
   return userProfileSchema.parse({ uid, ...input, createdAt: createdAtMs });
 }
+
+export async function updateUserLanguage(uid: string, language: "ja" | "en"): Promise<void> {
+  await firestore().collection(USERS_COLLECTION).doc(uid).update({ language });
+}

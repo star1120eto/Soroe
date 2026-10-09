@@ -2,7 +2,7 @@ import type { UserProfile } from '@soroe/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { signOut, subscribeToAuthState } from './AuthGateway';
-import { createUserProfile, getUserProfile } from './SessionRepository';
+import { createUserProfile, getUserProfile, updateUserLanguage } from './SessionRepository';
 
 // loading: 認証状態の確定待ち / needsProfile: Firebase Auth済みだが
 // users/{uid}未作成(AUTH-03の初期プロフィール画面へ誘導する状態)。
@@ -12,6 +12,7 @@ type SessionContextValue = {
   status: SessionStatus;
   profile: UserProfile | null;
   createProfile: (input: { displayName: string; language: 'ja' | 'en' }) => Promise<void>;
+  setLanguage: (language: 'ja' | 'en') => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -51,9 +52,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [uid]
   );
 
+  const setLanguage = useCallback(
+    async (language: 'ja' | 'en') => {
+      if (!uid) {
+        throw new Error('サインインしていない状態では言語を変更できません');
+      }
+      await updateUserLanguage(uid, language);
+      setProfile((current) => (current ? { ...current, language } : current));
+    },
+    [uid]
+  );
+
   const value = useMemo<SessionContextValue>(
-    () => ({ status, profile, createProfile, signOut }),
-    [status, profile, createProfile]
+    () => ({ status, profile, createProfile, setLanguage, signOut }),
+    [status, profile, createProfile, setLanguage]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
