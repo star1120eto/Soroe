@@ -1,10 +1,10 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { Alert, type AlertButton } from 'react-native';
-import type { List, ListMember } from '@soroe/shared';
+import type { List, ListItem, ListMember } from '@soroe/shared';
 
 import ListDetailScreen from '../../../../app/list/[listId]';
 import { useSession } from '../../../session/SessionProvider';
-import { subscribeToList, subscribeToListItems, subscribeToListMembers } from '../../ListRepository';
+import { setListItemCompletion, subscribeToList, subscribeToListItems, subscribeToListMembers } from '../../ListRepository';
 
 const mockRouter = { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() };
 
@@ -56,7 +56,33 @@ const unavailable = { code: 'firestore/unavailable' } as unknown as Error;
 
 type Failure = { list?: Error; items?: Error; members?: Error };
 
-function arrange({ asUid = OWNER, current = list, failure = {} }: { asUid?: string; current?: List; failure?: Failure } = {}) {
+function makeItem(id: string, name: string, completed = false): ListItem {
+  return {
+    id,
+    listId: 'list-1',
+    name,
+    quantity: null,
+    unit: null,
+    category: null,
+    note: null,
+    assigneeId: null,
+    dueAt: null,
+    completedAt: completed ? 2 : null,
+    completedBy: completed ? OWNER : null,
+    sortOrder: 1000,
+    createdBy: OWNER,
+    createdAt: 1,
+    updatedAt: 1,
+    deletedAt: null,
+  };
+}
+
+function arrange({
+  asUid = OWNER,
+  current = list,
+  failure = {},
+  items = [],
+}: { asUid?: string; current?: List; failure?: Failure; items?: ListItem[] } = {}) {
   jest.mocked(useSession).mockReturnValue({ profile: { uid: asUid } } as ReturnType<typeof useSession>);
   jest.mocked(subscribeToList).mockImplementation((_id, onChange, onError) => {
     if (failure.list) onError(failure.list);
@@ -65,7 +91,7 @@ function arrange({ asUid = OWNER, current = list, failure = {} }: { asUid?: stri
   });
   jest.mocked(subscribeToListItems).mockImplementation((_id, onChange, onError) => {
     if (failure.items) onError(failure.items);
-    else onChange({ items: [], hasPendingWrites: false, isFromCache: false });
+    else onChange({ items, hasPendingWrites: false, isFromCache: false });
     return jest.fn();
   });
   jest.mocked(subscribeToListMembers).mockImplementation((_id, onChange, onError) => {
@@ -170,6 +196,54 @@ describe('ListDetailScreen', () => {
       });
 
       expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/list-share', params: { listId: 'list-1' } });
+    });
+  });
+
+  describe('item row (tap completes, long press opens edit/reorder)', () => {
+    it('completes an incomplete item when its title is tapped, without opening the editor', async () => {
+      arrange({ items: [makeItem('item-1', '寝袋')] });
+      const { findByText } = await render(<ListDetailScreen />);
+
+      await fireEvent.press(await findByText('寝袋'));
+
+      expect(setListItemCompletion).toHaveBeenCalledWith('list-1', 'item-1', OWNER, true);
+      expect(mockRouter.push).not.toHaveBeenCalled();
+    });
+
+    it('reopens a completed item when its title is tapped', async () => {
+      arrange({ items: [makeItem('item-1', '寝袋', true)] });
+      const { findByText } = await render(<ListDetailScreen />);
+
+      await fireEvent.press(await findByText('寝袋'));
+
+      expect(setListItemCompletion).toHaveBeenCalledWith('list-1', 'item-1', OWNER, false);
+    });
+
+    it('offers edit and reorder on long press, and edit opens the item editor', async () => {
+      arrange({ items: [makeItem('item-1', '寝袋')] });
+      const { findByText } = await render(<ListDetailScreen />);
+
+      await fireEvent(await findByText('寝袋'), 'longPress');
+
+      expect(menuButtons().map((button) => button.text)).toEqual(['編集する', '並べ替える', 'キャンセル']);
+      menuButtons()[0].onPress?.();
+      expect(mockRouter.push).toHaveBeenCalledWith({
+        pathname: '/item-edit',
+        params: { listId: 'list-1', itemId: 'item-1' },
+      });
+      expect(setListItemCompletion).not.toHaveBeenCalled();
+    });
+
+    it('does not complete or open a menu for items of an archived list', async () => {
+      arrange({ current: { ...list, archivedAt: 5 }, items: [makeItem('item-1', '寝袋')] });
+      const { findByText } = await render(<ListDetailScreen />);
+      const title = await findByText('寝袋');
+
+      await fireEvent.press(title);
+      await fireEvent(title, 'longPress');
+
+      expect(setListItemCompletion).not.toHaveBeenCalled();
+      expect(Alert.alert).not.toHaveBeenCalled();
     });
   });
 });
