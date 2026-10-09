@@ -58,10 +58,13 @@ import { parseQuickAddInput } from '@/features/lists/quickAddParser';
 import { useSession } from '@/features/session/SessionProvider';
 import { isAccessDeniedError } from '@/features/sharing/accessErrors';
 import { assigneeChipLabel } from '@/features/sharing/memberLabels';
+import { useDelayedFlag } from '@/hooks/useDelayedFlag';
 
 // itemsSnapshotがnullの間の`?? []`が毎レンダー新しい配列になり、それに依存する
 // useMemoが無駄に再計算されるのを避けるための安定した既定値。
 const EMPTY_ITEMS: ListItem[] = [];
+// 「未同期の変更」帯を出すまでの待ち時間。通常の保存はこれより短い間に確定する。
+const PENDING_BANNER_DELAY_MS = 1000;
 
 // LIST-003/LIST-005/LIST-006: リスト詳細。購読、高速追加、チェック、
 // フィルター・検索・手動並べ替え、リスト操作メニューをまとめて扱う。
@@ -138,6 +141,9 @@ export default function ListDetailScreen() {
   }, [listId]);
 
   const items = itemsSnapshot?.items ?? EMPTY_ITEMS;
+  // 保存がサーバーへ届くまでの一瞬は出さない(出すと帯が点滅して内容が押し下げられる)。
+  // オフラインなどで続く場合だけ見せる。
+  const showPendingBanner = useDelayedFlag(itemsSnapshot?.hasPendingWrites ?? false, PENDING_BANNER_DELAY_MS);
   const isOwner = list != null && profile != null && list.ownerId === profile.uid;
   const categories = useMemo(() => uniqueCategories(items), [items]);
   const filteredItems = useMemo(() => filterListItems(items, filters), [items, filters]);
@@ -342,7 +348,7 @@ export default function ListDetailScreen() {
           {isReadOnly ? (
             <Banner message="アーカイブ中のため読み取り専用です。編集するにはアクティブに戻してください。" variant="warning" />
           ) : null}
-          {itemsSnapshot.hasPendingWrites ? <Banner message="未同期の変更があります" variant="info" /> : null}
+          {showPendingBanner ? <Banner message="未同期の変更があります" variant="info" /> : null}
           {duplicateWarning ? <Banner message={duplicateWarning} variant="warning" /> : null}
 
           <Input
