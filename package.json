@@ -16,13 +16,5 @@
     "build:functions": "pnpm --filter functions run build",
     "ci": "pnpm run build:shared && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions",
     "seed": "pnpm --filter functions run seed"
-  },
-  "pnpm": {
-    "overrides": {
-      "firebase": "12.15.0"
-    },
-    "patchedDependencies": {
-      "@react-native-firebase/auth@25.1.0": "patches/@react-native-firebase__auth@25.1.0.patch"
-    }
   }
 }

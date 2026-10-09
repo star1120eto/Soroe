@@ -208,13 +208,35 @@ export default function ListDetailScreen() {
   };
 
   const openItemEdit = (item: ListItem) => {
-    // reorderItemId(生の状態)ではなくisReorderingで見る。フィルターで
-    // canReorderがfalseになった後もreorderItemIdだけ残ると、並べ替え
-    // ボタンは消えるのに項目タップだけ塞がったままになってしまうため。
-    if (isReordering || isReadOnly) {
-      return; // 並べ替え中の誤タップでの遷移を防ぐ。アーカイブ中は読み取り専用。
-    }
     router.push({ pathname: '/item-edit', params: { listId: list!.id, itemId: item.id } });
+  };
+
+  // 行のタップは完了の切り替え。編集・並べ替えは長押しのメニューから行う。
+  // reorderItemId(生の状態)ではなくisReorderingで見る。フィルターで
+  // canReorderがfalseになった後もreorderItemIdだけ残ると、並べ替えボタンは
+  // 消えるのにタップだけ塞がったままになってしまうため。
+  const onItemPress = (item: ListItem) => {
+    if (isReordering || isReadOnly) {
+      return; // 並べ替え中の誤タップで完了が切り替わるのを防ぐ。アーカイブ中は読み取り専用。
+    }
+    toggleComplete(item);
+  };
+
+  const onItemLongPress = (item: ListItem) => {
+    if (isReadOnly) {
+      return;
+    }
+    // 並べ替え中の項目を長押しすると並べ替えを終える。
+    if (isReordering && reorderItemId === item.id) {
+      setReorderItemId(null);
+      return;
+    }
+    const buttons: AlertButton[] = [{ text: '編集する', onPress: () => openItemEdit(item) }];
+    if (canReorder) {
+      buttons.push({ text: '並べ替える', onPress: () => setReorderItemId(item.id) });
+    }
+    buttons.push({ text: 'キャンセル', style: 'cancel' });
+    Alert.alert(item.name, undefined, buttons);
   };
 
   const runOwnerAction = async (action: () => Promise<unknown>, onSuccess: () => void) => {
@@ -405,11 +427,13 @@ export default function ListDetailScreen() {
                   return (
                   <Pressable
                     key={item.id}
-                    onPress={() => openItemEdit(item)}
-                    onLongPress={() => canReorder && setReorderItemId((current) => (current === item.id ? null : item.id))}
+                    onPress={() => onItemPress(item)}
+                    onLongPress={() => onItemLongPress(item)}
                     delayLongPress={400}
-                    accessibilityRole="button"
-                    accessibilityLabel={item.name}>
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: item.completedAt !== null, disabled: isReadOnly }}
+                    accessibilityLabel={item.name}
+                    accessibilityHint="長押しで編集や並べ替え">
                     <View style={styles.itemRow}>
                       <Checkbox
                         checked={item.completedAt !== null}
@@ -460,6 +484,9 @@ export default function ListDetailScreen() {
               </View>
             ))
           )}
+          {!isReadOnly && sections.length > 0 ? (
+            <Text style={[Typography.caption, styles.itemsHint]}>タップで完了 ・ 長押しで編集・並べ替え</Text>
+          ) : null}
         </ScrollView>
 
         {isReadOnly ? null : (
@@ -532,6 +559,10 @@ const styles = StyleSheet.create({
   },
   itemMeta: {
     color: Colors.textSecondary,
+  },
+  itemsHint: {
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
   reorderControls: {
     flexDirection: 'row',
