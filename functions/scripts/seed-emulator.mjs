@@ -7,7 +7,7 @@
 //
 // - リストはアプリと同じCallable(createList / archiveList / createInvite)で作るため、
 //   members・listRefs・件数集計がアプリの経路どおりに整う。項目だけAdmin SDKで直接書く。
-// - ユーザーが未作成ならAuthに作る(その後メールOTPでログインすると、プロフィール設定へ進む)。
+// - ユーザーが未作成ならAuthに作り、プロフィールも用意する(メールOTPでログインすると、そのまま一覧へ進む)。
 // - 実行のたびにリストが増える(重複排除はしない)。Freeプランのアクティブリスト上限(3件)に
 //   達したら残りはスキップする。別のメールで実行するか、Emulatorを作り直す。
 // - Emulator以外には接続しない(接続先は 127.0.0.1 の既定ポート。環境変数で上書き可)。
@@ -119,14 +119,23 @@ try {
   user = await auth.createUser({ email, emailVerified: true, displayName });
   console.log(`ユーザーを作成しました: ${email}`);
 }
-// createListは users/{uid}.displayName をオーナーの表示名にする。未設定ならAuth側/引数/メールの
-// ローカル部を使う(通常はプロフィール設定で書かれる)。
-const profile = await db.doc(`users/${user.uid}`).get();
-if (!profile.exists || !profile.data()?.displayName) {
-  await db.doc(`users/${user.uid}`).set(
-    { displayName: displayName ?? user.displayName ?? email.split('@')[0] },
-    { merge: true }
-  );
+// アプリが読むプロフィール(users/{uid})を、欠けている項目だけ補って完全にする。
+// 表示名・言語・作成日時が揃っていないと、ログイン直後にアプリが読み込みに失敗する。
+// createListはこのdisplayNameをオーナーの表示名にする。
+const profileRef = db.doc(`users/${user.uid}`);
+const existing = (await profileRef.get()).data() ?? {};
+const missing = {};
+if (!existing.displayName) {
+  missing.displayName = displayName ?? user.displayName ?? email.split('@')[0];
+}
+if (!existing.language) {
+  missing.language = 'ja';
+}
+if (!existing.createdAt) {
+  missing.createdAt = FieldValue.serverTimestamp();
+}
+if (Object.keys(missing).length > 0) {
+  await profileRef.set(missing, { merge: true });
 }
 
 const idToken = await idTokenFor(user.uid);
