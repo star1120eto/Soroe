@@ -14,11 +14,7 @@
     "test": "pnpm -r --if-present run test",
     "build:shared": "pnpm --filter @soroe/shared run build",
     "build:functions": "pnpm --filter functions run build",
-    "ci": "pnpm run build:shared && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions"
-  },
-  "pnpm": {
-    "overrides": {
-      "firebase": "12.15.0"
-    }
+    "ci": "pnpm run build:shared && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions",
+    "seed": "pnpm --filter functions run seed"
   }
 }

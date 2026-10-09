@@ -6,9 +6,11 @@ import { useAppFonts } from '@/design-system';
 import { SessionProvider, useSession } from '@/features/session/SessionProvider';
 import { connectEmulators } from '@/lib/firebase/connectEmulators';
 import { initializeWebFirebase } from '@/lib/firebase/initializeWebFirebase';
+import { installWebAlert } from '@/lib/webAlert';
 
 SplashScreen.preventAutoHideAsync();
 initializeWebFirebase();
+installWebAlert();
 connectEmulators();
 
 function RootNavigator() {
@@ -28,7 +30,9 @@ function RootNavigator() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    // 戻るボタンは矢印のみにする。既定では前の画面のタイトルが付き、タイトルを持たない
+    // ルートグループ(app)が「(app)」と表示されてしまうため。
+    <Stack screenOptions={{ headerShown: false, headerBackButtonDisplayMode: 'minimal' }}>
       <Stack.Protected guard={status === 'authenticated'}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>

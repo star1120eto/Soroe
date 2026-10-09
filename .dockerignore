@@ -1,0 +1,19 @@
+# ビルドコンテキストから外す(イメージ内で pnpm install し直す。macOS用のnode_modules等は持ち込まない)
+**/node_modules
+**/.git
+.git
+apps/mobile/ios
+apps/mobile/android
+apps/mobile/.expo
+**/dist
+functions/lib
+**/*.log
+**/.env*.local
+functions/.secret.local
+apps/mobile/GoogleService-Info.plist
+apps/mobile/google-services.json
+docs
+tmp
+.idea
+.claude
+firestore-debug.log

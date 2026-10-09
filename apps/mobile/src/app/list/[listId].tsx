@@ -58,10 +58,13 @@ import { parseQuickAddInput } from '@/features/lists/quickAddParser';
 import { useSession } from '@/features/session/SessionProvider';
 import { isAccessDeniedError } from '@/features/sharing/accessErrors';
 import { assigneeChipLabel } from '@/features/sharing/memberLabels';
+import { useDelayedFlag } from '@/hooks/useDelayedFlag';
 
 // itemsSnapshotがnullの間の`?? []`が毎レンダー新しい配列になり、それに依存する
 // useMemoが無駄に再計算されるのを避けるための安定した既定値。
 const EMPTY_ITEMS: ListItem[] = [];
+// 「未同期の変更」帯を出すまでの待ち時間。通常の保存はこれより短い間に確定する。
+const PENDING_BANNER_DELAY_MS = 1000;
 
 // LIST-003/LIST-005/LIST-006: リスト詳細。購読、高速追加、チェック、
 // フィルター・検索・手動並べ替え、リスト操作メニューをまとめて扱う。
@@ -138,6 +141,9 @@ export default function ListDetailScreen() {
   }, [listId]);
 
   const items = itemsSnapshot?.items ?? EMPTY_ITEMS;
+  // 保存がサーバーへ届くまでの一瞬は出さない(出すと帯が点滅して内容が押し下げられる)。
+  // オフラインなどで続く場合だけ見せる。
+  const showPendingBanner = useDelayedFlag(itemsSnapshot?.hasPendingWrites ?? false, PENDING_BANNER_DELAY_MS);
   const isOwner = list != null && profile != null && list.ownerId === profile.uid;
   const categories = useMemo(() => uniqueCategories(items), [items]);
   const filteredItems = useMemo(() => filterListItems(items, filters), [items, filters]);
@@ -202,13 +208,35 @@ export default function ListDetailScreen() {
   };
 
   const openItemEdit = (item: ListItem) => {
-    // reorderItemId(生の状態)ではなくisReorderingで見る。フィルターで
-    // canReorderがfalseになった後もreorderItemIdだけ残ると、並べ替え
-    // ボタンは消えるのに項目タップだけ塞がったままになってしまうため。
-    if (isReordering || isReadOnly) {
-      return; // 並べ替え中の誤タップでの遷移を防ぐ。アーカイブ中は読み取り専用。
-    }
     router.push({ pathname: '/item-edit', params: { listId: list!.id, itemId: item.id } });
+  };
+
+  // 行のタップは完了の切り替え。編集・並べ替えは長押しのメニューから行う。
+  // reorderItemId(生の状態)ではなくisReorderingで見る。フィルターで
+  // canReorderがfalseになった後もreorderItemIdだけ残ると、並べ替えボタンは
+  // 消えるのにタップだけ塞がったままになってしまうため。
+  const onItemPress = (item: ListItem) => {
+    if (isReordering || isReadOnly) {
+      return; // 並べ替え中の誤タップで完了が切り替わるのを防ぐ。アーカイブ中は読み取り専用。
+    }
+    toggleComplete(item);
+  };
+
+  const onItemLongPress = (item: ListItem) => {
+    if (isReadOnly) {
+      return;
+    }
+    // 並べ替え中の項目を長押しすると並べ替えを終える。
+    if (isReordering && reorderItemId === item.id) {
+      setReorderItemId(null);
+      return;
+    }
+    const buttons: AlertButton[] = [{ text: '編集する', onPress: () => openItemEdit(item) }];
+    if (canReorder) {
+      buttons.push({ text: '並べ替える', onPress: () => setReorderItemId(item.id) });
+    }
+    buttons.push({ text: 'キャンセル', style: 'cancel' });
+    Alert.alert(item.name, undefined, buttons);
   };
 
   const runOwnerAction = async (action: () => Promise<unknown>, onSuccess: () => void) => {
@@ -342,7 +370,7 @@ export default function ListDetailScreen() {
           {isReadOnly ? (
             <Banner message="アーカイブ中のため読み取り専用です。編集するにはアクティブに戻してください。" variant="warning" />
           ) : null}
-          {itemsSnapshot.hasPendingWrites ? <Banner message="未同期の変更があります" variant="info" /> : null}
+          {showPendingBanner ? <Banner message="未同期の変更があります" variant="info" /> : null}
           {duplicateWarning ? <Banner message={duplicateWarning} variant="warning" /> : null}
 
           <Input
@@ -399,11 +427,13 @@ export default function ListDetailScreen() {
                   return (
                   <Pressable
                     key={item.id}
-                    onPress={() => openItemEdit(item)}
-                    onLongPress={() => canReorder && setReorderItemId((current) => (current === item.id ? null : item.id))}
+                    onPress={() => onItemPress(item)}
+                    onLongPress={() => onItemLongPress(item)}
                     delayLongPress={400}
-                    accessibilityRole="button"
-                    accessibilityLabel={item.name}>
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: item.completedAt !== null, disabled: isReadOnly }}
+                    accessibilityLabel={item.name}
+                    accessibilityHint="長押しで編集や並べ替え">
                     <View style={styles.itemRow}>
                       <Checkbox
                         checked={item.completedAt !== null}
@@ -454,6 +484,9 @@ export default function ListDetailScreen() {
               </View>
             ))
           )}
+          {!isReadOnly && sections.length > 0 ? (
+            <Text style={[Typography.caption, styles.itemsHint]}>タップで完了 ・ 長押しで編集・並べ替え</Text>
+          ) : null}
         </ScrollView>
 
         {isReadOnly ? null : (
@@ -526,6 +559,10 @@ const styles = StyleSheet.create({
   },
   itemMeta: {
     color: Colors.textSecondary,
+  },
+  itemsHint: {
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
   reorderControls: {
     flexDirection: 'row',

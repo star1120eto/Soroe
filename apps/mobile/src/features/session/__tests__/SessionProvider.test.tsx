@@ -11,6 +11,7 @@ jest.mock('../AuthGateway', () => ({
 jest.mock('../SessionRepository', () => ({
   getUserProfile: jest.fn(),
   createUserProfile: jest.fn(),
+  updateUserLanguage: jest.fn(),
 }));
 
 const mockFirebaseUser = { uid: 'uid-1' } as import('@react-native-firebase/auth').FirebaseAuthTypes.User;
@@ -95,5 +96,57 @@ describe('SessionProvider', () => {
     await act(() => authStateCallback(null));
 
     await expect(result.current.createProfile({ displayName: 'たろう', language: 'ja' })).rejects.toThrow();
+  });
+
+  it('setLanguage stores the language and updates the profile', async () => {
+    jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(existingProfile);
+    jest.mocked(SessionRepository.updateUserLanguage).mockResolvedValue();
+
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+    await act(() => authStateCallback(mockFirebaseUser));
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+
+    await act(() => result.current.setLanguage('en'));
+
+    expect(SessionRepository.updateUserLanguage).toHaveBeenCalledWith('uid-1', 'en');
+    expect(result.current.profile?.language).toBe('en');
+  });
+
+  it('setLanguage reverts the language when saving fails', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(existingProfile);
+    jest.mocked(SessionRepository.updateUserLanguage).mockRejectedValue(new Error('offline'));
+
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+    await act(() => authStateCallback(mockFirebaseUser));
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+
+    await act(() => result.current.setLanguage('en'));
+
+    await waitFor(() => expect(result.current.profile?.language).toBe('ja'));
+  });
+
+  it('setLanguage does not wait for the server (offline writes never resolve)', async () => {
+    jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(existingProfile);
+    jest.mocked(SessionRepository.updateUserLanguage).mockReturnValue(new Promise(() => {}));
+
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+    await act(() => authStateCallback(mockFirebaseUser));
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+
+    await act(() => result.current.setLanguage('en'));
+
+    expect(result.current.profile?.language).toBe('en');
+  });
+
+  it('becomes unauthenticated instead of staying in loading when the profile cannot be read', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.mocked(SessionRepository.getUserProfile).mockRejectedValue(new Error('unavailable'));
+
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+    await act(() => authStateCallback(mockFirebaseUser));
+
+    await waitFor(() => expect(result.current.status).toBe('unauthenticated'));
+    expect(result.current.profile).toBeNull();
   });
 });
