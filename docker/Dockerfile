@@ -12,6 +12,7 @@ WORKDIR /app
 
 # 依存を先に入れてレイヤーキャッシュを効かせる(マニフェストだけを先にコピーする)。
 COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches patches/
 COPY apps/mobile/package.json apps/mobile/
 COPY functions/package.json functions/
 COPY packages/shared/package.json packages/shared/
