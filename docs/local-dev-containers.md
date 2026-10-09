@@ -102,7 +102,8 @@ Simulatorのユーザーが同じリストを共有できる。
 - メールOTPのシークレットはEmulator専用の固定値(`OTP_HASH_SECRET`、既定 `container-dev-secret`)。
 - Web版の `EXPO_PUBLIC_FIREBASE_WEB_*` はEmulator接続では使われないダミー値。`projectId` だけは
   Emulatorのプロジェクト(`soroe-1850a`)と揃えている。
-- 本番のFirebaseへは接続しない。Web版には「Emulatorモード」の注意帯が出る。
+- 本番のFirebaseへは接続しない。FirebaseのSDKが画面下に出す「Running in emulator mode」の帯は、タブバーや
+  入力欄に被って操作できなくなるため、Web版では非表示にしている(`connectEmulators.ts`)。
 - Web版はオフライン永続化を使わない(リロードするとキャッシュは残らない)。
 - Web版のログイン状態はブラウザの `localStorage` に保存され、再読み込みしても維持される
   (`@react-native-firebase/auth` のWeb実装はメモリ保存のため、`patches/` のパッチでブラウザ保存にしている)。
