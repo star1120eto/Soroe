@@ -8,8 +8,8 @@
 // - リストはアプリと同じCallable(createList / archiveList / createInvite)で作るため、
 //   members・listRefs・件数集計がアプリの経路どおりに整う。項目だけAdmin SDKで直接書く。
 // - ユーザーが未作成ならAuthに作り、プロフィールも用意する(メールOTPでログインすると、そのまま一覧へ進む)。
-// - 実行のたびにリストが増える(重複排除はしない)。Freeプランのアクティブリスト上限(3件)に
-//   達したら残りはスキップする。別のメールで実行するか、Emulatorを作り直す。
+// - 同名のリストが既にあれば作らない(繰り返し実行しても増えない)。Freeプランのアクティブリスト上限
+//   (3件)に達したら残りはスキップする。作り直すときはEmulatorを作り直す。
 // - Emulator以外には接続しない(接続先は 127.0.0.1 の既定ポート。環境変数で上書き可)。
 
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -143,6 +143,12 @@ const now = FieldValue.serverTimestamp();
 const inviteUrls = [];
 
 for (const spec of LISTS) {
+  // 同名のリストが(削除されずに)既にあれば作らない。繰り返し実行しても増えない。
+  const sameName = await db.collection('lists').where('ownerId', '==', user.uid).where('name', '==', spec.name).get();
+  if (sameName.docs.some((snapshot) => snapshot.data().deletedAt == null)) {
+    console.log(`スキップ(作成済み): ${spec.name}`);
+    continue;
+  }
   let listId;
   try {
     ({ listId } = await call('createList', idToken, {

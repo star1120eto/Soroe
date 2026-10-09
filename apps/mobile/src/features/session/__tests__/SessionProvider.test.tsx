@@ -112,7 +112,8 @@ describe('SessionProvider', () => {
     expect(result.current.profile?.language).toBe('en');
   });
 
-  it('setLanguage keeps the profile unchanged when saving fails', async () => {
+  it('setLanguage reverts the language when saving fails', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(existingProfile);
     jest.mocked(SessionRepository.updateUserLanguage).mockRejectedValue(new Error('offline'));
 
@@ -120,10 +121,32 @@ describe('SessionProvider', () => {
     await act(() => authStateCallback(mockFirebaseUser));
     await waitFor(() => expect(result.current.status).toBe('authenticated'));
 
-    await act(async () => {
-      await expect(result.current.setLanguage('en')).rejects.toThrow('offline');
-    });
+    await act(() => result.current.setLanguage('en'));
 
-    expect(result.current.profile?.language).toBe('ja');
+    await waitFor(() => expect(result.current.profile?.language).toBe('ja'));
+  });
+
+  it('setLanguage does not wait for the server (offline writes never resolve)', async () => {
+    jest.mocked(SessionRepository.getUserProfile).mockResolvedValue(existingProfile);
+    jest.mocked(SessionRepository.updateUserLanguage).mockReturnValue(new Promise(() => {}));
+
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+    await act(() => authStateCallback(mockFirebaseUser));
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+
+    await act(() => result.current.setLanguage('en'));
+
+    expect(result.current.profile?.language).toBe('en');
+  });
+
+  it('becomes unauthenticated instead of staying in loading when the profile cannot be read', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.mocked(SessionRepository.getUserProfile).mockRejectedValue(new Error('unavailable'));
+
+    const { result } = await renderHook(() => useSession(), { wrapper: SessionProvider });
+    await act(() => authStateCallback(mockFirebaseUser));
+
+    await waitFor(() => expect(result.current.status).toBe('unauthenticated'));
+    expect(result.current.profile).toBeNull();
   });
 });

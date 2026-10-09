@@ -8,6 +8,7 @@ import { Colors, Radius } from '@/design-system/tokens';
 // destructiveは警告色で出す。
 
 let installed = false;
+const openOverlays: HTMLElement[] = [];
 
 function style(element: HTMLElement, css: Partial<CSSStyleDeclaration>) {
   Object.assign(element.style, css);
@@ -64,6 +65,7 @@ function showWebAlert(title: string, message?: string, buttons?: AlertButton[]) 
 
   const close = () => {
     document.removeEventListener('keydown', onKeyDown, true);
+    openOverlays.splice(openOverlays.indexOf(overlay), 1);
     overlay.remove();
     previousFocus?.focus?.();
   };
@@ -72,7 +74,8 @@ function showWebAlert(title: string, message?: string, buttons?: AlertButton[]) 
     button?.onPress?.();
   };
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    // ダイアログが重なっているときは、最前面のものだけがEscapeに反応する。
+    if (event.key === 'Escape' && openOverlays[openOverlays.length - 1] === overlay) {
       event.stopPropagation();
       choose(cancel);
     }
@@ -115,6 +118,7 @@ function showWebAlert(title: string, message?: string, buttons?: AlertButton[]) 
 
   document.addEventListener('keydown', onKeyDown, true);
   document.body.appendChild(overlay);
+  openOverlays.push(overlay);
   firstButton?.focus();
 }
 
