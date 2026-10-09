@@ -6,9 +6,11 @@ import { useAppFonts } from '@/design-system';
 import { SessionProvider, useSession } from '@/features/session/SessionProvider';
 import { connectEmulators } from '@/lib/firebase/connectEmulators';
 import { initializeWebFirebase } from '@/lib/firebase/initializeWebFirebase';
+import { installWebAlert } from '@/lib/webAlert';
 
 SplashScreen.preventAutoHideAsync();
 initializeWebFirebase();
+installWebAlert();
 connectEmulators();
 
 function RootNavigator() {

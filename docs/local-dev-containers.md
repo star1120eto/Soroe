@@ -75,15 +75,9 @@ Simulatorのユーザーが同じリストを共有できる。
   Emulatorのプロジェクト(`soroe-1850a`)と揃えている。
 - 本番のFirebaseへは接続しない。Web版には「Emulatorモード」の注意帯が出る。
 - Web版はオフライン永続化を使わない(リロードするとキャッシュは残らない)。
-- Web版は認証状態も永続化しない。**ページを再読み込みするとログアウト**し、URLを直接開いた画面は
-  ログインへ戻る。確認はログイン後、画面内の遷移で行う。
-- `Alert.alert` はWebでは何も表示されない(React Native Webの仕様)。リスト詳細のメニュー(共有・
-  アーカイブ等)と、取消・削除・退出などの確認ダイアログはWeb版では動かない。共有画面を見たいときは、
-  ログイン後にブラウザのコンソールで次を実行して画面内遷移する(`<listId>` は一覧のURLから取る)。
-
-  ```js
-  history.pushState({}, '', '/list-share?listId=<listId>');
-  dispatchEvent(new PopStateEvent('popstate', { state: {} }));
-  ```
-
-  Web版でのダイアログ対応は別チケットで扱う(本コンテナ構成の対象外)。
+- Web版のログイン状態はブラウザの `localStorage` に保存され、再読み込みしても維持される
+  (`@react-native-firebase/auth` のWeb実装はメモリ保存のため、`patches/` のパッチでブラウザ保存にしている)。
+  ただしコンテナを作り直すとEmulatorのユーザーが消えるため、その場合は保存済みの状態でも再ログインが必要になる。
+- `Alert.alert` はReact Native Webでは何も表示されないため、Webでは `src/lib/webAlert.ts` が
+  DOMのモーダルへ差し替える(`_layout.tsx` で有効化)。メニュー・確認ダイアログはネイティブと同じ
+  ボタン構成で出る。背景タップ・Escはキャンセル扱い。

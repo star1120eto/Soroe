@@ -1,0 +1,15 @@
+diff --git a/dist/module/web/RNFBAuthModule.js b/dist/module/web/RNFBAuthModule.js
+index 954ab2ac7656b58bffc6ee20ef03632ab0d639a8..9c4a6224b21f38a200956a58c02661b1bfb9b16b 100644
+--- a/dist/module/web/RNFBAuthModule.js
++++ b/dist/module/web/RNFBAuthModule.js
+@@ -209,6 +209,10 @@ function getCachedAuthInstance(appName) {
+       // get a bundle that defines `getReactNativePersistence` etc, but web platforms
+       // do *not* have that method defined. So we only call it for non-web platforms
+       authOptions.persistence = getReactNativePersistence(getReactNativeAsyncStorageInternal());
++    } else {
++      // Soroe patch: webではブラウザのlocalStorageへセッションを保存し、再読み込み後も
++      // ログイン状態を保つ(既定のinitializeAuthはメモリのみで、リロードでログアウトする)。
++      authOptions.persistence = (firebaseAuthModule).browserLocalPersistence;
+     }
+     instances[appName] = initializeAuth(getApp(appName), authOptions);
+   }
