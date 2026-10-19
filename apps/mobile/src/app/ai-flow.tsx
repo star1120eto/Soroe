@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { AiAgeBand, AiFeature, AiSeason, AiUseCase } from '@soroe/shared';
@@ -59,6 +59,7 @@ export default function AiFlowScreen() {
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [draft, setDraft] = useState<AiDraft>(emptyDraft());
+  const edited = useRef(false); // 入力済みなら、遅れて届いた保存条件で上書きしない
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -72,7 +73,7 @@ export default function AiFlowScreen() {
     let cancelled = false;
     loadGenerationProfile(uid).then(
       (saved) => {
-        if (!cancelled && saved) {
+        if (!cancelled && saved && !edited.current) {
           setDraft((current) => applyProfile(current, saved));
         }
       },
@@ -87,7 +88,10 @@ export default function AiFlowScreen() {
     return <Redirect href="/" />;
   }
 
-  const update = (patch: Partial<AiDraft>) => setDraft((current) => ({ ...current, ...patch }));
+  const update = (patch: Partial<AiDraft>) => {
+    edited.current = true;
+    setDraft((current) => ({ ...current, ...patch }));
+  };
 
   const goNext = () => {
     const message = validateStep(step as 1 | 2 | 3, draft);

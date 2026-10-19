@@ -90,7 +90,7 @@ export async function generateListHandler(input: unknown, uid: string, deps: Dep
   const client = deps.client ?? getAiClient();
   const model = await getAiModel(plan);
   const outcome = await generateWithRetry(client, generationInput, model, deps.timeoutMs ?? AI_TIMEOUT_MS);
-  const completed = await completeGenerationTransaction(uid, requestId, outcome, nowMs);
+  const completed = await completeGenerationTransaction(uid, requestId, outcome);
 
   // 生成中にキャンセルされていた場合、結果は捨てられている。
   if (completed.status === "cancelled") {

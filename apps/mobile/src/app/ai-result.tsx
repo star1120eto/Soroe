@@ -117,9 +117,9 @@ export default function AiResultScreen() {
   };
 
   const cancel = async () => {
-    await clearPendingAiRequest();
     try {
       await cancelGeneration({ requestId });
+      await clearPendingAiRequest();
     } catch (error) {
       setMessage(describeAiError(error));
     }

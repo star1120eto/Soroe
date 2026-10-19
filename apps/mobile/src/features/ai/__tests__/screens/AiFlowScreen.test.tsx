@@ -70,6 +70,19 @@ describe('AiFlowScreen', () => {
     expect(screen.getByLabelText('大人の人数').props.value).toBe('3');
   });
 
+  it('does not overwrite what the user already chose when the saved conditions arrive late', async () => {
+    arrange();
+    let resolveProfile: (value: unknown) => void = () => undefined;
+    jest.mocked(loadGenerationProfile).mockReturnValue(new Promise((resolve) => (resolveProfile = resolve)) as never);
+    const screen = await render(<AiFlowScreen />);
+
+    await fireEvent.press(screen.getByRole('button', { name: '登山' }));
+    await act(async () => resolveProfile({ useCase: 'travel', adults: 3, children: 0, ageBands: [], nights: 2, season: 'summer', features: [] }));
+
+    expect(screen.getByRole('button', { name: '登山' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('button', { name: '旅行' }).props.accessibilityState.selected).toBe(false);
+  });
+
   async function reachConfirmation(screen: Awaited<ReturnType<typeof render>>) {
     await fireEvent.press(screen.getByRole('button', { name: '登山' }));
     await next(screen);

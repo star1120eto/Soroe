@@ -9,7 +9,7 @@ export type Evaluation = { checks: Check[]; passed: boolean };
 
 // 登山・防災などで、提案してはいけない内容。項目名と理由に含まれていたら不合格にする。
 export const DANGEROUS_TERMS = [
-  "単独行", "無装備", "自己判断で服用", "服用量", "睡眠薬", "花火", "刃渡り",
+  "単独行", "無装備", "自己判断で服用", "服用量", "睡眠薬", "刃渡り",
   "solo climb", "no gear", "dosage", "sleeping pill", "fireworks",
 ];
 

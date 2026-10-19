@@ -44,7 +44,7 @@ const activeOf = async (uid = UID) => (await db.doc(`users/${uid}/aiState/active
 
 const reserve = (requestId: string, plan: "free" | "premium" = "free", nowMs = NOW, uid = UID) =>
   reserveGenerationTransaction(uid, requestId, input, plan, nowMs);
-const succeed = (requestId: string, nowMs = NOW) => completeGenerationTransaction(UID, requestId, { kind: "succeeded", result }, nowMs);
+const succeed = (requestId: string) => completeGenerationTransaction(UID, requestId, { kind: "succeeded", result });
 
 describe("reserveGenerationTransaction", () => {
   it("reserves a generation: counts one use, records the request and marks it active", async () => {
@@ -88,7 +88,7 @@ describe("reserveGenerationTransaction", () => {
     const firstMoment = Date.UTC(2026, 9, 31, 15, 0, 0);
 
     await reserve("r1", "premium", lastMoment);
-    await succeed("r1", lastMoment);
+    await succeed("r1");
     await reserve("r2", "premium", firstMoment);
 
     expect(await countOf(`${UID}_202610`)).toBe(1);
@@ -128,6 +128,25 @@ describe("reserveGenerationTransaction", () => {
     expect(await activeOf()).toMatchObject({ requestId: "r2" });
   });
 
+  it("fails and refunds a stale reservation when the same requestId is sent again", async () => {
+    await reserve("r1");
+
+    const later = NOW + AI_ACTIVE_TTL_MS + 1;
+    const again = await reserve("r1", "free", later);
+
+    expect(again).toMatchObject({ status: "existing", request: { status: "failed" } });
+    expect(await requestOf(UID, "r1")).toMatchObject({ status: "failed" });
+    expect(await countOf(`${UID}_lifetime`)).toBe(0);
+    expect(await activeOf()).toBeUndefined();
+  });
+
+  it("leaves a fresh reservation alone when the same requestId is sent again", async () => {
+    await reserve("r1");
+
+    await expect(reserve("r1", "free", NOW + 1000)).resolves.toMatchObject({ status: "existing", request: { status: "reserved" } });
+    expect(await countOf(`${UID}_lifetime`)).toBe(1);
+  });
+
   it("keeps requests of different users apart even with the same requestId", async () => {
     await reserve("r1", "free", NOW, "user-a");
     await expect(reserve("r1", "free", NOW, "user-b")).resolves.toEqual({ status: "reserved" });
@@ -152,7 +171,7 @@ describe("completeGenerationTransaction", () => {
     await reserve("r1");
 
     await expect(
-      completeGenerationTransaction(UID, "r1", { kind, message: "メッセージ" }, NOW)
+      completeGenerationTransaction(UID, "r1", { kind, message: "メッセージ" })
     ).resolves.toEqual({ status: kind });
 
     expect(await countOf(`${UID}_lifetime`)).toBe(0);

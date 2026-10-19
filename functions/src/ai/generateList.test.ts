@@ -47,7 +47,7 @@ describe("generateListHandler", () => {
     expect(response.status === "succeeded" && response.result.items.map((i) => i.name)).toEqual(["水", "地図"]);
     expect(client.generate).toHaveBeenCalledWith(INPUT, expect.objectContaining({ model: "model-x", signal: expect.anything() }));
     expect(aiStore.reserveGenerationTransaction).toHaveBeenCalledWith("uid-1", "req-1", INPUT, "free", 1000);
-    expect(aiStore.completeGenerationTransaction).toHaveBeenCalledWith("uid-1", "req-1", expect.objectContaining({ kind: "succeeded" }), 1000);
+    expect(aiStore.completeGenerationTransaction).toHaveBeenCalledWith("uid-1", "req-1", expect.objectContaining({ kind: "succeeded" }));
   });
 
   it("cuts a result with more than 80 items to 80", async () => {
@@ -95,7 +95,7 @@ describe("generateListHandler", () => {
 
     await expect(generateListHandler(REQUEST, "uid-1", { client })).resolves.toEqual({ status: "refused", message: "作成できません" });
     expect(client.generate).toHaveBeenCalledTimes(1);
-    expect(aiStore.completeGenerationTransaction).toHaveBeenCalledWith("uid-1", "req-1", { kind: "refused", message: "作成できません" }, expect.any(Number));
+    expect(aiStore.completeGenerationTransaction).toHaveBeenCalledWith("uid-1", "req-1", { kind: "refused", message: "作成できません" });
   });
 
   it("retries once after an error, and succeeds on the second attempt", async () => {
@@ -118,7 +118,7 @@ describe("generateListHandler", () => {
 
     expect(response.status).toBe("failed");
     expect(client.generate).toHaveBeenCalledTimes(2);
-    expect(aiStore.completeGenerationTransaction).toHaveBeenCalledWith("uid-1", "req-1", expect.objectContaining({ kind: "failed" }), expect.any(Number));
+    expect(aiStore.completeGenerationTransaction).toHaveBeenCalledWith("uid-1", "req-1", expect.objectContaining({ kind: "failed" }));
   });
 
   it("fails after two errors without a third attempt", async () => {

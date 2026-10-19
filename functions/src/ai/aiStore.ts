@@ -79,7 +79,20 @@ export async function reserveGenerationTransaction(
     // read-then-write。読み取りを先に終える。
     const [requestSnap, usageSnap, activeSnap] = await Promise.all([tx.get(requestRef), tx.get(usageRef), tx.get(activeRef)]);
     if (requestSnap.exists) {
-      return { status: "existing" as const, request: toView(requestSnap.data()!) };
+      const existing = requestSnap.data()!;
+      const active = activeSnap.data();
+      const expired = active?.requestId === requestId && nowMs - (active.since as number) >= AI_ACTIVE_TTL_MS;
+      if (existing.status !== "reserved" || !expired) {
+        return { status: "existing" as const, request: toView(existing) };
+      }
+      // 同じrequestIdの再送で、失効した予約が見つかった。失敗にして回数を戻し、状態を返す。
+      const ownUsageRef = db.collection("aiUsage").doc(existing.usageKey as string);
+      const count = ownUsageRef.path === usageRef.path ? (usageSnap.data()?.count ?? 0) : ((await tx.get(ownUsageRef)).data()?.count ?? 0);
+      const message = "生成がタイムアウトしました";
+      tx.update(requestRef, { status: "failed", message, updatedAt: FieldValue.serverTimestamp() });
+      tx.set(ownUsageRef, { count: Math.max(count - 1, 0) }, { merge: true });
+      tx.delete(activeRef);
+      return { status: "existing" as const, request: toView({ ...existing, status: "failed", message }) };
     }
 
     let staleRequestRef: DocumentReference | null = null;
@@ -135,8 +148,7 @@ function releaseUse(tx: Transaction, usageRef: DocumentReference, currentCount: 
 export async function completeGenerationTransaction(
   uid: string,
   requestId: string,
-  outcome: CompleteOutcome,
-  _nowMs: number
+  outcome: CompleteOutcome
 ): Promise<{ status: AiRequestStatus | "not-found" }> {
   const { db, requestRef, activeRef } = refs(uid, requestId);
 
