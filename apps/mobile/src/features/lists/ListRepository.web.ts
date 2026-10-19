@@ -87,6 +87,7 @@ export const subscribeToListItems: typeof Native.subscribeToListItems = (listId,
       onChange({
         items: snapshot.docs.map((d) => toListItem(d.id, listId, d.data())),
         hasPendingWrites: snapshot.metadata.hasPendingWrites,
+        pendingCount: snapshot.docs.filter((d) => d.metadata.hasPendingWrites).length,
         isFromCache: snapshot.metadata.fromCache,
       }),
     onError

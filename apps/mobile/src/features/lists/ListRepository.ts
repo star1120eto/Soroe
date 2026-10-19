@@ -116,6 +116,8 @@ export function subscribeToListItem(
 export type ListItemsSnapshot = {
   items: ListItem[];
   hasPendingWrites: boolean;
+  /** 未送信の書込を持つ項目の数(リスト詳細の「未同期 N件」)。 */
+  pendingCount: number;
   isFromCache: boolean;
 };
 
@@ -134,6 +136,7 @@ export function subscribeToListItems(
       onChange({
         items: snapshot.docs.map((doc) => toListItem(doc.id, listId, doc.data())),
         hasPendingWrites: snapshot.metadata.hasPendingWrites,
+        pendingCount: snapshot.docs.filter((doc) => doc.metadata.hasPendingWrites).length,
         isFromCache: snapshot.metadata.fromCache,
       });
     }, onError);

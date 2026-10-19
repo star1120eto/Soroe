@@ -91,7 +91,7 @@ function arrange({
   });
   jest.mocked(subscribeToListItems).mockImplementation((_id, onChange, onError) => {
     if (failure.items) onError(failure.items);
-    else onChange({ items, hasPendingWrites: false, isFromCache: false });
+    else onChange({ items, hasPendingWrites: false, pendingCount: 0, isFromCache: false });
     return jest.fn();
   });
   jest.mocked(subscribeToListMembers).mockImplementation((_id, onChange, onError) => {
