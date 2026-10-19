@@ -1,0 +1,276 @@
+{
+  "id": "weekly-groceries",
+  "category": "shopping",
+  "priority": 10,
+  "published": true,
+  "listType": "shopping",
+  "icon": "shopping-cart-simple",
+  "adjustableByPeople": true,
+  "defaultPartySize": 3,
+  "hasSafetyNotice": false,
+  "itemCount": 14,
+  "ja": {
+    "title": "1週間分の食材",
+    "description": "家族の1週間の食事に必要な食材のひな形",
+    "notice": null
+  },
+  "en": {
+    "title": "Weekly groceries",
+    "description": "A starting point for a family's week of meals",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "rice",
+      "sortOrder": 1000,
+      "quantity": 0.5,
+      "perPerson": true,
+      "ja": {
+        "name": "米",
+        "unit": "kg",
+        "category": "主食",
+        "note": null
+      },
+      "en": {
+        "name": "Rice",
+        "unit": "kg",
+        "category": "Staples",
+        "note": null
+      }
+    },
+    {
+      "id": "bread",
+      "sortOrder": 2000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "食パン",
+        "unit": "袋",
+        "category": "主食",
+        "note": null
+      },
+      "en": {
+        "name": "Sliced bread",
+        "unit": "bag",
+        "category": "Staples",
+        "note": null
+      }
+    },
+    {
+      "id": "noodles",
+      "sortOrder": 3000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "パスタ・麺類",
+        "unit": "袋",
+        "category": "主食",
+        "note": null
+      },
+      "en": {
+        "name": "Pasta and noodles",
+        "unit": "pack",
+        "category": "Staples",
+        "note": null
+      }
+    },
+    {
+      "id": "eggs",
+      "sortOrder": 4000,
+      "quantity": 2,
+      "perPerson": true,
+      "ja": {
+        "name": "卵",
+        "unit": "個",
+        "category": "乳製品・卵",
+        "note": null
+      },
+      "en": {
+        "name": "Eggs",
+        "unit": "pcs",
+        "category": "Dairy & eggs",
+        "note": null
+      }
+    },
+    {
+      "id": "milk",
+      "sortOrder": 5000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "牛乳",
+        "unit": "本",
+        "category": "乳製品・卵",
+        "note": null
+      },
+      "en": {
+        "name": "Milk",
+        "unit": "bottle",
+        "category": "Dairy & eggs",
+        "note": null
+      }
+    },
+    {
+      "id": "yogurt",
+      "sortOrder": 6000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "ヨーグルト",
+        "unit": "個",
+        "category": "乳製品・卵",
+        "note": null
+      },
+      "en": {
+        "name": "Yogurt",
+        "unit": "cup",
+        "category": "Dairy & eggs",
+        "note": null
+      }
+    },
+    {
+      "id": "meat",
+      "sortOrder": 7000,
+      "quantity": 150,
+      "perPerson": true,
+      "ja": {
+        "name": "肉(鶏・豚・牛)",
+        "unit": "g",
+        "category": "肉・魚",
+        "note": null
+      },
+      "en": {
+        "name": "Meat (chicken, pork, beef)",
+        "unit": "g",
+        "category": "Meat & fish",
+        "note": null
+      }
+    },
+    {
+      "id": "fish",
+      "sortOrder": 8000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "魚",
+        "unit": "切れ",
+        "category": "肉・魚",
+        "note": null
+      },
+      "en": {
+        "name": "Fish",
+        "unit": "fillet",
+        "category": "Meat & fish",
+        "note": null
+      }
+    },
+    {
+      "id": "onion-carrot",
+      "sortOrder": 9000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "玉ねぎ・にんじん・じゃがいも",
+        "unit": "袋",
+        "category": "野菜・果物",
+        "note": null
+      },
+      "en": {
+        "name": "Onions, carrots, potatoes",
+        "unit": "bag",
+        "category": "Produce",
+        "note": null
+      }
+    },
+    {
+      "id": "leafy",
+      "sortOrder": 10000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "葉物野菜",
+        "unit": "束",
+        "category": "野菜・果物",
+        "note": null
+      },
+      "en": {
+        "name": "Leafy vegetables",
+        "unit": "bunch",
+        "category": "Produce",
+        "note": null
+      }
+    },
+    {
+      "id": "fruit",
+      "sortOrder": 11000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "果物",
+        "unit": "個",
+        "category": "野菜・果物",
+        "note": null
+      },
+      "en": {
+        "name": "Fruit",
+        "unit": "pcs",
+        "category": "Produce",
+        "note": null
+      }
+    },
+    {
+      "id": "tofu",
+      "sortOrder": 12000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "豆腐・納豆",
+        "unit": "パック",
+        "category": "大豆製品",
+        "note": null
+      },
+      "en": {
+        "name": "Tofu and natto",
+        "unit": "pack",
+        "category": "Soy products",
+        "note": null
+      }
+    },
+    {
+      "id": "seasoning",
+      "sortOrder": 13000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "調味料の補充",
+        "unit": null,
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Refill seasonings",
+        "unit": null,
+        "category": "Other",
+        "note": null
+      }
+    },
+    {
+      "id": "drinks",
+      "sortOrder": 14000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "飲み物",
+        "unit": null,
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Drinks",
+        "unit": null,
+        "category": "Other",
+        "note": null
+      }
+    }
+  ]
+}

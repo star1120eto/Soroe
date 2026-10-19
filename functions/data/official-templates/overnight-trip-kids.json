@@ -1,0 +1,276 @@
+{
+  "id": "overnight-trip-kids",
+  "category": "family-trip",
+  "priority": 10,
+  "published": true,
+  "listType": "packing",
+  "icon": "suitcase",
+  "adjustableByPeople": true,
+  "defaultPartySize": 4,
+  "hasSafetyNotice": false,
+  "itemCount": 14,
+  "ja": {
+    "title": "子連れ1泊2日の旅行",
+    "description": "子どもと行く1泊2日の旅行の持ち物",
+    "notice": null
+  },
+  "en": {
+    "title": "Overnight trip with kids",
+    "description": "Things to pack for a one-night family trip",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "tickets",
+      "sortOrder": 1000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "チケット・予約確認",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Tickets and reservations",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "wallet",
+      "sortOrder": 2000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "財布・現金",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Wallet and cash",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "insurance",
+      "sortOrder": 3000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "健康保険証・母子手帳",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Health insurance cards",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "phone-charger",
+      "sortOrder": 4000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "スマホ・充電器",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Phone and charger",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "clothes",
+      "sortOrder": 5000,
+      "quantity": 2,
+      "perPerson": true,
+      "ja": {
+        "name": "着替え",
+        "unit": "組",
+        "category": "衣類",
+        "note": null
+      },
+      "en": {
+        "name": "Change of clothes",
+        "unit": "sets",
+        "category": "Clothing",
+        "note": null
+      }
+    },
+    {
+      "id": "underwear",
+      "sortOrder": 6000,
+      "quantity": 2,
+      "perPerson": true,
+      "ja": {
+        "name": "下着・靴下",
+        "unit": "組",
+        "category": "衣類",
+        "note": null
+      },
+      "en": {
+        "name": "Underwear and socks",
+        "unit": "sets",
+        "category": "Clothing",
+        "note": null
+      }
+    },
+    {
+      "id": "pajamas",
+      "sortOrder": 7000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "パジャマ",
+        "unit": "着",
+        "category": "衣類",
+        "note": null
+      },
+      "en": {
+        "name": "Pajamas",
+        "unit": "set",
+        "category": "Clothing",
+        "note": null
+      }
+    },
+    {
+      "id": "toothbrush",
+      "sortOrder": 8000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "歯ブラシ",
+        "unit": "本",
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Toothbrush",
+        "unit": "pcs",
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "towel",
+      "sortOrder": 9000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "タオル",
+        "unit": "枚",
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Towels",
+        "unit": "pcs",
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "medicine",
+      "sortOrder": 10000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "常備薬・体温計",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Medicine and thermometer",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "wet-tissue",
+      "sortOrder": 11000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ウェットティッシュ",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Wet wipes",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "snacks",
+      "sortOrder": 12000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "おやつ・飲み物",
+        "unit": null,
+        "category": "子ども用品",
+        "note": null
+      },
+      "en": {
+        "name": "Snacks and drinks",
+        "unit": null,
+        "category": "For kids",
+        "note": null
+      }
+    },
+    {
+      "id": "toys",
+      "sortOrder": 13000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "おもちゃ・絵本",
+        "unit": null,
+        "category": "子ども用品",
+        "note": null
+      },
+      "en": {
+        "name": "Toys and picture books",
+        "unit": null,
+        "category": "For kids",
+        "note": null
+      }
+    },
+    {
+      "id": "rain-gear",
+      "sortOrder": 14000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "雨具",
+        "unit": "着",
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Rain gear",
+        "unit": "pcs",
+        "category": "Other",
+        "note": null
+      }
+    }
+  ]
+}

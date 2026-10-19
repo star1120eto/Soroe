@@ -1,0 +1,222 @@
+{
+  "id": "school-excursion",
+  "category": "school",
+  "priority": 10,
+  "published": true,
+  "listType": "packing",
+  "icon": "suitcase",
+  "adjustableByPeople": false,
+  "defaultPartySize": 1,
+  "hasSafetyNotice": false,
+  "itemCount": 11,
+  "ja": {
+    "title": "遠足の持ち物",
+    "description": "幼稚園・小学校の遠足の持ち物",
+    "notice": null
+  },
+  "en": {
+    "title": "School excursion",
+    "description": "Things for a school trip",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "backpack",
+      "sortOrder": 1000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "リュックサック",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Backpack",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "lunch",
+      "sortOrder": 2000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "お弁当",
+        "unit": null,
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Lunch box",
+        "unit": null,
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "water-bottle",
+      "sortOrder": 3000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "水筒",
+        "unit": null,
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Water bottle",
+        "unit": null,
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "snack",
+      "sortOrder": 4000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "おやつ(金額に注意)",
+        "unit": null,
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Snack (check the limit)",
+        "unit": null,
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "sheet",
+      "sortOrder": 5000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "レジャーシート",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Picnic blanket",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "hat",
+      "sortOrder": 6000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "帽子",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Hat",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "handkerchief",
+      "sortOrder": 7000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ハンカチ・ティッシュ",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Handkerchief and tissues",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "wet-tissue",
+      "sortOrder": 8000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ウェットティッシュ",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Wet wipes",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "rain-gear",
+      "sortOrder": 9000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "雨具",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Rain gear",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "plastic-bag",
+      "sortOrder": 10000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ビニール袋",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Plastic bag",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "name-tag",
+      "sortOrder": 11000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "名前の記入の確認",
+        "unit": null,
+        "category": "前日までに",
+        "note": null
+      },
+      "en": {
+        "name": "Check the name tags",
+        "unit": null,
+        "category": "Day before",
+        "note": null
+      }
+    }
+  ]
+}

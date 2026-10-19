@@ -1,0 +1,222 @@
+{
+  "id": "park-picnic",
+  "category": "outing",
+  "priority": 10,
+  "published": true,
+  "listType": "packing",
+  "icon": "suitcase",
+  "adjustableByPeople": true,
+  "defaultPartySize": 4,
+  "hasSafetyNotice": false,
+  "itemCount": 11,
+  "ja": {
+    "title": "公園・ピクニック",
+    "description": "近所の公園やピクニックの持ち物",
+    "notice": null
+  },
+  "en": {
+    "title": "Park and picnic",
+    "description": "Things for a day at the park",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "sheet",
+      "sortOrder": 1000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "レジャーシート",
+        "unit": "枚",
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Picnic blanket",
+        "unit": "pcs",
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "drinks",
+      "sortOrder": 2000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "飲み物",
+        "unit": "本",
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Drinks",
+        "unit": "bottle",
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "lunch",
+      "sortOrder": 3000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "お弁当",
+        "unit": "個",
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Lunch",
+        "unit": "box",
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "snacks",
+      "sortOrder": 4000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "おやつ",
+        "unit": null,
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Snacks",
+        "unit": null,
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "wet-tissue",
+      "sortOrder": 5000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ウェットティッシュ",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Wet wipes",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "trash-bag",
+      "sortOrder": 6000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ゴミ袋",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Trash bags",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "hat",
+      "sortOrder": 7000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "帽子",
+        "unit": "個",
+        "category": "暑さ・日差し対策",
+        "note": null
+      },
+      "en": {
+        "name": "Hat",
+        "unit": "pcs",
+        "category": "Sun protection",
+        "note": null
+      }
+    },
+    {
+      "id": "sunscreen",
+      "sortOrder": 8000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "日焼け止め",
+        "unit": null,
+        "category": "暑さ・日差し対策",
+        "note": null
+      },
+      "en": {
+        "name": "Sunscreen",
+        "unit": null,
+        "category": "Sun protection",
+        "note": null
+      }
+    },
+    {
+      "id": "towel",
+      "sortOrder": 9000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "タオル",
+        "unit": "枚",
+        "category": "暑さ・日差し対策",
+        "note": null
+      },
+      "en": {
+        "name": "Towel",
+        "unit": "pcs",
+        "category": "Sun protection",
+        "note": null
+      }
+    },
+    {
+      "id": "ball",
+      "sortOrder": 10000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ボール・遊び道具",
+        "unit": null,
+        "category": "遊び",
+        "note": null
+      },
+      "en": {
+        "name": "Ball and toys",
+        "unit": null,
+        "category": "Play",
+        "note": null
+      }
+    },
+    {
+      "id": "bandaids",
+      "sortOrder": 11000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "絆創膏",
+        "unit": null,
+        "category": "救急",
+        "note": null
+      },
+      "en": {
+        "name": "Bandages",
+        "unit": null,
+        "category": "First aid",
+        "note": null
+      }
+    }
+  ]
+}

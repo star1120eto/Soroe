@@ -1,0 +1,276 @@
+{
+  "id": "disaster-kit",
+  "category": "home",
+  "priority": 10,
+  "published": true,
+  "listType": "packing",
+  "icon": "house",
+  "adjustableByPeople": true,
+  "defaultPartySize": 4,
+  "hasSafetyNotice": true,
+  "itemCount": 14,
+  "ja": {
+    "title": "防災用品",
+    "description": "自宅の備蓄・非常持ち出し袋の確認用",
+    "notice": "状況や専門機関の最新情報を確認してください。このリストは安全を保証するものではありません。"
+  },
+  "en": {
+    "title": "Disaster kit",
+    "description": "A checklist for home stock and an emergency bag",
+    "notice": "Check current conditions and official information. This list does not guarantee your safety."
+  },
+  "items": [
+    {
+      "id": "water",
+      "sortOrder": 1000,
+      "quantity": 3,
+      "perPerson": true,
+      "ja": {
+        "name": "飲料水",
+        "unit": "L",
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Drinking water",
+        "unit": "L",
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "food",
+      "sortOrder": 2000,
+      "quantity": 3,
+      "perPerson": true,
+      "ja": {
+        "name": "非常食",
+        "unit": "食",
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Emergency food",
+        "unit": "servings",
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "flashlight",
+      "sortOrder": 3000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "懐中電灯・ヘッドライト",
+        "unit": "個",
+        "category": "照明・情報",
+        "note": null
+      },
+      "en": {
+        "name": "Flashlight",
+        "unit": "pcs",
+        "category": "Light and info",
+        "note": null
+      }
+    },
+    {
+      "id": "radio",
+      "sortOrder": 4000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "携帯ラジオ",
+        "unit": "台",
+        "category": "照明・情報",
+        "note": null
+      },
+      "en": {
+        "name": "Portable radio",
+        "unit": "pcs",
+        "category": "Light and info",
+        "note": null
+      }
+    },
+    {
+      "id": "batteries",
+      "sortOrder": 5000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "予備の電池",
+        "unit": null,
+        "category": "照明・情報",
+        "note": null
+      },
+      "en": {
+        "name": "Spare batteries",
+        "unit": null,
+        "category": "Light and info",
+        "note": null
+      }
+    },
+    {
+      "id": "power-bank",
+      "sortOrder": 6000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "モバイルバッテリー",
+        "unit": "個",
+        "category": "照明・情報",
+        "note": null
+      },
+      "en": {
+        "name": "Power bank",
+        "unit": "pcs",
+        "category": "Light and info",
+        "note": null
+      }
+    },
+    {
+      "id": "first-aid",
+      "sortOrder": 7000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "救急セット・常備薬",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "First aid kit and medicine",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "toilet",
+      "sortOrder": 8000,
+      "quantity": 5,
+      "perPerson": true,
+      "ja": {
+        "name": "簡易トイレ",
+        "unit": "回分",
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Portable toilet",
+        "unit": "uses",
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "tissue",
+      "sortOrder": 9000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ティッシュ・ウェットティッシュ",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Tissues and wet wipes",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "blanket",
+      "sortOrder": 10000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "防寒用のブランケット",
+        "unit": "枚",
+        "category": "生活用品",
+        "note": null
+      },
+      "en": {
+        "name": "Warm blanket",
+        "unit": "pcs",
+        "category": "Daily life",
+        "note": null
+      }
+    },
+    {
+      "id": "gloves",
+      "sortOrder": 11000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "軍手",
+        "unit": "組",
+        "category": "生活用品",
+        "note": null
+      },
+      "en": {
+        "name": "Work gloves",
+        "unit": "pair",
+        "category": "Daily life",
+        "note": null
+      }
+    },
+    {
+      "id": "cash",
+      "sortOrder": 12000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "現金・小銭",
+        "unit": null,
+        "category": "貴重品",
+        "note": null
+      },
+      "en": {
+        "name": "Cash and coins",
+        "unit": null,
+        "category": "Valuables",
+        "note": null
+      }
+    },
+    {
+      "id": "documents",
+      "sortOrder": 13000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "身分証・保険証のコピー",
+        "unit": null,
+        "category": "貴重品",
+        "note": null
+      },
+      "en": {
+        "name": "Copies of IDs and insurance cards",
+        "unit": null,
+        "category": "Valuables",
+        "note": null
+      }
+    },
+    {
+      "id": "baby-supplies",
+      "sortOrder": 14000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "乳幼児用品(ミルク・おむつ)",
+        "unit": null,
+        "category": "家族に合わせて",
+        "note": null
+      },
+      "en": {
+        "name": "Baby supplies (formula, diapers)",
+        "unit": null,
+        "category": "For your family",
+        "note": null
+      }
+    }
+  ]
+}
