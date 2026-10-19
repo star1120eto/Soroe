@@ -42,3 +42,6 @@ jobs:
 
       # TMPL-004 / AC-04: 公式テンプレートから作成、マイテンプレート保存・Free上限・独立性(Emulator)。
       - run: pnpm --filter functions exec firebase emulators:exec --only auth,firestore,functions --project soroe-1850a 'pnpm run templates:seed && pnpm --filter mobile run e2e:templates'
+
+      # AI-005 / AC-05: AI生成の回数・失敗時の返却・保存(Emulator、偽のAIクライアント)。
+      - run: AI_CLIENT=fake pnpm --filter functions exec firebase emulators:exec --only auth,firestore,functions --project soroe-1850a 'pnpm --filter mobile run e2e:ai'

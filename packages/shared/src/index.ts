@@ -5,3 +5,4 @@ export * from "./schemas/invite";
 export * from "./schemas/list";
 export * from "./schemas/userProfile";
 export * from "./schemas/template";
+export * from "./schemas/ai";

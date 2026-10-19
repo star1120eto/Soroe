@@ -17,6 +17,7 @@
     "ci": "pnpm run build:shared && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:functions",
     "seed": "pnpm --filter functions run seed",
     "templates:validate": "pnpm --filter functions run templates:validate",
-    "templates:seed": "pnpm --filter functions run templates:seed"
+    "templates:seed": "pnpm --filter functions run templates:seed",
+    "ai:eval": "pnpm --filter functions run ai:eval"
   }
 }

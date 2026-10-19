@@ -12,6 +12,9 @@ fi
 pnpm run build:shared
 pnpm run build:functions
 
+# 実際のOpenAIクライアントができるまでは、偽のAIクライアントでAI生成を動かす(ローカル開発専用)。
+export AI_CLIENT=fake
+
 exec functions/node_modules/.bin/firebase emulators:start \
   --config firebase.container.json \
   --only auth,firestore,functions \

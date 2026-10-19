@@ -37,6 +37,11 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // AI-004: 「次回も使う」で保存した生成条件。本人だけが読み書きできる(読込側がスキーマで検証する)。
+      match /generationProfiles/{profileId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
       // MYTM-01/02: マイテンプレート。作成(保存)は上限判定を伴うためFunctions(Admin SDK)に限り、
       // 本人は名前・説明の変更と項目を減らす更新(オフラインでも可)、削除だけをclientから行える。
       match /myTemplates/{templateId} {
@@ -124,6 +129,17 @@ service cloud.firestore {
           get(/databases/$(database)/documents/officialTemplates/$(templateId)).data.published == true;
         allow write: if false;
       }
+    }
+
+    // AI-001: 生成の状態。IDは `${uid}_${requestId}`。本人だけが自分の結果を読める。書込・回数(aiUsage)・
+    // 同時実行の印(users/{uid}/aiState)は、回数を原子的に更新するFunctions(Admin SDK)に限る。
+    match /aiRequests/{requestDocId} {
+      // 結果画面は、サーバーが予約する前(文書がまだ無い間)から購読を始める。文書が無いときは
+      // IDの接頭辞(uid)で、あるときは文書のuidで、本人かを判定する。
+      allow read: if isSignedIn() &&
+        requestDocId.matches(request.auth.uid + '_.*') &&
+        (resource == null || resource.data.uid == request.auth.uid);
+      allow write: if false;
     }
   }
 }

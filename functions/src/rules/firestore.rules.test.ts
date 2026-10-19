@@ -528,3 +528,52 @@ describe("templates", () => {
     await assertSucceeds(testEnv.authenticatedContext(MYSELF).firestore().doc(`users/${MYSELF}/myTemplates/t1`).delete());
   });
 });
+
+// AI-001: 生成の状態・回数はFunctionsだけが書き、本人は自分の生成結果だけを読める。
+describe("ai generation", () => {
+  const ME = "ai-owner";
+  const OTHER = "ai-other";
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await db.doc(`aiRequests/${ME}_r1`).set({ uid: ME, status: "succeeded", result: null });
+      await db.doc(`aiUsage/${ME}_lifetime`).set({ count: 1 });
+      await db.doc(`users/${ME}/aiState/active`).set({ requestId: "r1", since: 1 });
+    });
+  });
+
+  it("lets the owner read their own request but not someone else's", async () => {
+    await assertSucceeds(testEnv.authenticatedContext(ME).firestore().doc(`aiRequests/${ME}_r1`).get());
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`aiRequests/${ME}_r1`).get());
+    await assertFails(testEnv.unauthenticatedContext().firestore().doc(`aiRequests/${ME}_r1`).get());
+  });
+
+  it("lets the owner subscribe to a request that does not exist yet (the screen opens before the server reserves it)", async () => {
+    const mine = testEnv.authenticatedContext(ME).firestore();
+    const missing = await assertSucceeds(mine.doc(`aiRequests/${ME}_not-yet`).get());
+    expect(missing.exists).toBe(false);
+    // 他人のIDの(まだ無い)文書は、存在の有無に関わらず読めない。
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`aiRequests/${ME}_not-yet`).get());
+  });
+
+  it("never lets a client write a request, usage or the active marker", async () => {
+    const db = testEnv.authenticatedContext(ME).firestore();
+    await assertFails(db.doc(`aiRequests/${ME}_r2`).set({ uid: ME, status: "succeeded" }));
+    await assertFails(db.doc(`aiRequests/${ME}_r1`).update({ status: "failed" }));
+    await assertFails(db.doc(`aiUsage/${ME}_lifetime`).set({ count: 0 }));
+    await assertFails(db.doc(`users/${ME}/aiState/active`).delete());
+  });
+
+  it("does not let a client read the usage counters", async () => {
+    await assertFails(testEnv.authenticatedContext(ME).firestore().doc(`aiUsage/${ME}_lifetime`).get());
+  });
+
+  it("lets the owner keep a generation profile, and no one else touch it", async () => {
+    const mine = testEnv.authenticatedContext(ME).firestore().doc(`users/${ME}/generationProfiles/default`);
+    await assertSucceeds(mine.set({ useCase: "hiking", adults: 2 }));
+    await assertSucceeds(mine.get());
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`users/${ME}/generationProfiles/default`).get());
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`users/${ME}/generationProfiles/default`).set({ x: 1 }));
+  });
+});
