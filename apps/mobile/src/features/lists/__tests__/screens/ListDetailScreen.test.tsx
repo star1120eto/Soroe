@@ -3,6 +3,7 @@ import { Alert, type AlertButton } from 'react-native';
 import type { List, ListItem, ListMember } from '@soroe/shared';
 
 import ListDetailScreen from '../../../../app/list/[listId]';
+import { useConnectivity } from '../../../connectivity/ConnectivityProvider';
 import { useSession } from '../../../session/SessionProvider';
 import { setListItemCompletion, subscribeToList, subscribeToListItems, subscribeToListMembers } from '../../ListRepository';
 
@@ -17,6 +18,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'uuid' }));
 jest.mock('../../../session/SessionProvider', () => ({ useSession: jest.fn() }));
+jest.mock('../../../connectivity/ConnectivityProvider', () => ({ useConnectivity: jest.fn() }));
 jest.mock('../../ListRepository', () => ({
   subscribeToList: jest.fn(),
   subscribeToListItems: jest.fn(),
@@ -82,7 +84,10 @@ function arrange({
   current = list,
   failure = {},
   items = [],
-}: { asUid?: string; current?: List; failure?: Failure; items?: ListItem[] } = {}) {
+  pendingCount = 0,
+  offline = false,
+}: { asUid?: string; current?: List; failure?: Failure; items?: ListItem[]; pendingCount?: number; offline?: boolean } = {}) {
+  jest.mocked(useConnectivity).mockReturnValue({ isOffline: offline, isRetrying: false, retry: jest.fn() });
   jest.mocked(useSession).mockReturnValue({ profile: { uid: asUid } } as ReturnType<typeof useSession>);
   jest.mocked(subscribeToList).mockImplementation((_id, onChange, onError) => {
     if (failure.list) onError(failure.list);
@@ -91,7 +96,7 @@ function arrange({
   });
   jest.mocked(subscribeToListItems).mockImplementation((_id, onChange, onError) => {
     if (failure.items) onError(failure.items);
-    else onChange({ items, hasPendingWrites: false, pendingCount: 0, isFromCache: false });
+    else onChange({ items, hasPendingWrites: pendingCount > 0, pendingCount, isFromCache: false });
     return jest.fn();
   });
   jest.mocked(subscribeToListMembers).mockImplementation((_id, onChange, onError) => {
@@ -244,6 +249,25 @@ describe('ListDetailScreen', () => {
 
       expect(setListItemCompletion).not.toHaveBeenCalled();
       expect(Alert.alert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('offline banner (OFF-001)', () => {
+    it('shows the offline message and the pending count when offline', async () => {
+      arrange({ offline: true, pendingCount: 2, items: [makeItem('item-1', '寝袋')] });
+      const { findByText } = await render(<ListDetailScreen />);
+
+      expect(await findByText('オフラインです。変更は端末に保存され、復帰後に自動で同期します')).toBeTruthy();
+      expect(await findByText('未同期 2件')).toBeTruthy();
+    });
+
+    it('shows no banner when online with nothing pending', async () => {
+      arrange({ items: [makeItem('item-1', '寝袋')] });
+      const { findByText, queryByText } = await render(<ListDetailScreen />);
+
+      await findByText('寝袋');
+      expect(queryByText(/オフラインです/)).toBeNull();
+      expect(queryByText(/同期中です/)).toBeNull();
     });
   });
 });

@@ -59,6 +59,8 @@ import { useSession } from '@/features/session/SessionProvider';
 import { isAccessDeniedError } from '@/features/sharing/accessErrors';
 import { assigneeChipLabel } from '@/features/sharing/memberLabels';
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
+import { useConnectivity } from '@/features/connectivity/ConnectivityProvider';
+import { OfflineBanner } from '@/features/connectivity/OfflineBanner';
 
 // itemsSnapshotがnullの間の`?? []`が毎レンダー新しい配列になり、それに依存する
 // useMemoが無駄に再計算されるのを避けるための安定した既定値。
@@ -141,9 +143,12 @@ export default function ListDetailScreen() {
   }, [listId]);
 
   const items = itemsSnapshot?.items ?? EMPTY_ITEMS;
-  // 保存がサーバーへ届くまでの一瞬は出さない(出すと帯が点滅して内容が押し下げられる)。
-  // オフラインなどで続く場合だけ見せる。
-  const showPendingBanner = useDelayedFlag(itemsSnapshot?.hasPendingWrites ?? false, PENDING_BANNER_DELAY_MS);
+  // 保存がサーバーへ届くまでの一瞬は「同期中」を出さない(出すと帯が点滅して内容が押し下げられる)。
+  // オフラインの帯と件数は、接続状態(ConnectivityProvider)が3秒続いたときだけ出る。
+  const { isOffline, isRetrying, retry } = useConnectivity();
+  const pendingCount = useDelayedFlag((itemsSnapshot?.pendingCount ?? 0) > 0, PENDING_BANNER_DELAY_MS)
+    ? (itemsSnapshot?.pendingCount ?? 0)
+    : 0;
   const isOwner = list != null && profile != null && list.ownerId === profile.uid;
   const categories = useMemo(() => uniqueCategories(items), [items]);
   const filteredItems = useMemo(() => filterListItems(items, filters), [items, filters]);
@@ -370,7 +375,7 @@ export default function ListDetailScreen() {
           {isReadOnly ? (
             <Banner message="アーカイブ中のため読み取り専用です。編集するにはアクティブに戻してください。" variant="warning" />
           ) : null}
-          {showPendingBanner ? <Banner message="未同期の変更があります" variant="info" /> : null}
+          <OfflineBanner isOffline={isOffline} pendingCount={isOffline ? (itemsSnapshot.pendingCount) : pendingCount} isRetrying={isRetrying} onRetry={retry} />
           {duplicateWarning ? <Banner message={duplicateWarning} variant="warning" /> : null}
 
           <Input
