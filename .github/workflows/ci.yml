@@ -36,3 +36,6 @@ jobs:
 
       # SHARE-005: 作成→招待→受諾→追加→完了→権限喪失の2ユーザー通し(Emulator)。
       - run: pnpm --filter functions exec firebase emulators:exec --only auth,firestore,functions --project soroe-1850a 'pnpm --filter mobile run e2e:share'
+
+      # OFF-003 / AC-03: 機内モード(disableNetwork)での追加・編集・完了・削除、復帰後の同期、同時編集の競合(Emulator)。
+      - run: pnpm --filter functions exec firebase emulators:exec --only auth,firestore,functions --project soroe-1850a 'pnpm --filter mobile run e2e:offline'
