@@ -9,6 +9,7 @@ jest.mock('../../session/SessionProvider', () => ({ useSession: jest.fn() }));
 jest.mock('../SyncStateRepository', () => ({ subscribeToSyncState: jest.fn(), reconnect: jest.fn() }));
 
 let emit: (state: { fromCache: boolean }) => void;
+let emitError: (error: Error) => void;
 const unsubscribe = jest.fn();
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -20,8 +21,9 @@ describe('ConnectivityProvider', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     jest.mocked(useSession).mockReturnValue({ profile: { uid: 'uid-1' } } as ReturnType<typeof useSession>);
-    jest.mocked(subscribeToSyncState).mockImplementation((_uid, onChange) => {
+    jest.mocked(subscribeToSyncState).mockImplementation((_uid, onChange, onError) => {
       emit = onChange;
+      emitError = onError;
       return unsubscribe;
     });
     jest.mocked(reconnect).mockResolvedValue();
@@ -75,5 +77,29 @@ describe('ConnectivityProvider', () => {
     expect(subscribeToSyncState).toHaveBeenCalledWith('uid-1', expect.any(Function), expect.any(Function));
     await signedIn.unmount();
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it('does not report offline just because the subscription ended with an error', async () => {
+    const { result } = await renderHook(() => useConnectivity(), { wrapper });
+
+    await act(async () => emit({ fromCache: false }));
+    await act(async () => emitError(new Error('permission-denied')));
+    await act(async () => jest.advanceTimersByTime(5000));
+
+    expect(result.current.isOffline).toBe(false);
+  });
+
+  it('swallows a failing reconnect and lets the user retry again', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.mocked(reconnect).mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce();
+    const { result } = await renderHook(() => useConnectivity(), { wrapper });
+
+    await act(async () => {
+      await expect(result.current.retry()).resolves.toBeUndefined();
+    });
+    expect(result.current.isRetrying).toBe(false);
+
+    await act(async () => result.current.retry());
+    expect(reconnect).toHaveBeenCalledTimes(2);
   });
 });

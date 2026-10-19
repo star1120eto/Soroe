@@ -162,12 +162,11 @@ async function main() {
 
   console.log(`AC-03 オフライン(Emulator・2ユーザー、試行${attempt}回目)`);
   const uidA = await signUp(a, 'たろう');
-  const uidB = await signUp(b, 'はなこ');
+  await signUp(b, 'はなこ');
 
   let listId;
   const watchA = { items: new Map(), meta: { fromCache: true }, unsubscribe: () => {} };
   const watchB = { items: new Map(), meta: { fromCache: true }, unsubscribe: () => {} };
-  const watchers = [];
 
   try {
     await step('準備: AがリストをつくりBを招待、Bが参加する', async () => {
@@ -187,7 +186,6 @@ async function main() {
         holder.items = watcher.items;
         holder.meta = watcher.meta;
         holder.unsubscribe = watcher.unsubscribe;
-        watchers.push(watcher);
       }
     });
 
@@ -276,7 +274,6 @@ async function main() {
       }
     });
   } finally {
-    watchers.forEach((watcher) => watcher.unsubscribe());
     watchA.unsubscribe();
     watchB.unsubscribe();
   }

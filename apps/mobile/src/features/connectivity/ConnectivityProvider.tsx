@@ -31,7 +31,9 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
     const unsubscribe = subscribeToSyncState(
       uid,
       (state) => setFromCache(state.fromCache),
-      () => setFromCache(true)
+      // 購読が失敗で終わった(権限・トークン更新の過渡など)だけでは、接続の有無は分からない。
+      // オフライン扱いにはせず、現在の表示を保つ。
+      (error) => console.error('subscribeToSyncState failed', error)
     );
     return () => {
       unsubscribe();
@@ -50,6 +52,9 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
     setIsRetrying(true);
     try {
       await reconnect();
+    } catch (error) {
+      // ボタンの押下から呼ばれるため、失敗は握りつぶして(ログのみ)もう一度押せる状態へ戻す。
+      console.error('reconnect failed', error);
     } finally {
       retryingRef.current = false;
       setIsRetrying(false);

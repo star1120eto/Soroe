@@ -55,6 +55,11 @@ export default function ListScreen() {
   if (error) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        {isOffline ? (
+          <View style={styles.content}>
+            <OfflineBanner isOffline={isOffline} pendingCount={0} isRetrying={isRetrying} onRetry={retry} />
+          </View>
+        ) : null}
         <ErrorState
           title="読み込みに失敗しました"
           description={error}
@@ -80,6 +85,11 @@ export default function ListScreen() {
   if (lists.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        {isOffline ? (
+          <View style={styles.content}>
+            <OfflineBanner isOffline={isOffline} pendingCount={0} isRetrying={isRetrying} onRetry={retry} />
+          </View>
+        ) : null}
         <EmptyState
           title="リストがありません"
           description="最初のリストを作成しましょう"

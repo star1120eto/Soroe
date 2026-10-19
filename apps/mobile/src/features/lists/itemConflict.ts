@@ -1,5 +1,7 @@
 import type { ListItem } from '@soroe/shared';
 
+import { formatDueDateInput } from './dueDate';
+
 // SYNC-01 / ITEM-01: 項目編集の競合判定。画面から切り出してテストしやすくする。
 // 「自分が変えた項目」と「他のメンバーが変えた項目」が重なったときだけ比較確認を出し、
 // 重ならなければ自分が変えた項目だけを保存する(別の項目の変更は消さない)。
@@ -95,7 +97,7 @@ function display(field: EditableField, value: EditableValues[EditableField]): st
     return value ? '完了' : '未完了';
   }
   if (field === 'dueAt' && typeof value === 'number') {
-    return new Date(value).toISOString().slice(0, 10);
+    return formatDueDateInput(value);
   }
   return String(value);
 }

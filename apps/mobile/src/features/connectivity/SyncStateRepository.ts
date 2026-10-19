@@ -25,6 +25,10 @@ export function subscribeToSyncState(
 
 /** 手動の再試行。ネットワークを一度切って入れ直し、再接続を促す。 */
 export async function reconnect(): Promise<void> {
-  await firestore().disableNetwork();
-  await firestore().enableNetwork();
+  try {
+    await firestore().disableNetwork();
+  } finally {
+    // disableに失敗・中断しても、必ずネットワークを有効へ戻す(無効のまま残さない)。
+    await firestore().enableNetwork();
+  }
 }

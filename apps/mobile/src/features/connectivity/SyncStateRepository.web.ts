@@ -17,6 +17,10 @@ export const subscribeToSyncState: typeof Native.subscribeToSyncState = (uid, on
   );
 
 export const reconnect: typeof Native.reconnect = async () => {
-  await disableNetwork(webFirestore());
-  await enableNetwork(webFirestore());
+  try {
+    await disableNetwork(webFirestore());
+  } finally {
+    // disableに失敗・中断しても、必ずネットワークを有効へ戻す(無効のまま残さない)。
+    await enableNetwork(webFirestore());
+  }
 };
