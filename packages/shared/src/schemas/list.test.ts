@@ -10,6 +10,7 @@ import {
   duplicateListRequestSchema,
   duplicateListResponseSchema,
   listItemSchema,
+  listMemberSchema,
   listSchema,
   okResponseSchema,
   restoreListRequestSchema,
@@ -90,6 +91,22 @@ describe("listItemSchema", () => {
     ["negative quantity", { quantity: -1 }],
   ])("rejects %s", (_label, override) => {
     expect(() => listItemSchema.parse({ ...baseItem, ...override })).toThrow();
+  });
+});
+
+describe("listMemberSchema", () => {
+  const base = { uid: "uid-1", listId: "list-1", role: "editor" as const, joinedAt: 1 };
+
+  it("keeps the denormalized display name", () => {
+    expect(listMemberSchema.parse({ ...base, displayName: "はなこ" }).displayName).toBe("はなこ");
+  });
+
+  it("defaults a missing display name to null (members created before SHARE-001)", () => {
+    expect(listMemberSchema.parse(base).displayName).toBeNull();
+  });
+
+  it("rejects a blank display name", () => {
+    expect(() => listMemberSchema.parse({ ...base, displayName: "  " })).toThrow();
   });
 });
 

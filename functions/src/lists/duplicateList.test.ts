@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { duplicateListHandler } from "./duplicateList";
 import * as entitlements from "./entitlements";
 import * as listStore from "./listStore";
+import * as profile from "../users/profile";
 
 vi.mock("./entitlements");
 vi.mock("./listStore");
+vi.mock("../users/profile");
 
 const INPUT = { listId: "list-1", requestId: "req-1" };
 
@@ -13,13 +15,20 @@ describe("duplicateListHandler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(entitlements.getPlan).mockResolvedValue("free");
+    vi.mocked(profile.getDisplayName).mockResolvedValue("たろう");
   });
 
   it("returns the new list's id", async () => {
     vi.mocked(listStore.duplicateListTransaction).mockResolvedValue({ status: "ok", listId: "list-2" });
 
     await expect(duplicateListHandler(INPUT, "uid-1")).resolves.toEqual({ listId: "list-2" });
-    expect(listStore.duplicateListTransaction).toHaveBeenCalledWith("uid-1", "req-1", "list-1", "free");
+    expect(listStore.duplicateListTransaction).toHaveBeenCalledWith(
+      "uid-1",
+      "req-1",
+      "list-1",
+      "free",
+      "たろう"
+    );
   });
 
   it("throws not-found when the source list is missing or the caller isn't a member", async () => {

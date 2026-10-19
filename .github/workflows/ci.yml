@@ -33,3 +33,6 @@ jobs:
       - run: pnpm run ci
 
       - run: pnpm --filter functions run test:rules
+
+      # SHARE-005: 作成→招待→受諾→追加→完了→権限喪失の2ユーザー通し(Emulator)。
+      - run: pnpm --filter functions exec firebase emulators:exec --only auth,firestore,functions --project soroe-1850a 'pnpm --filter mobile run e2e:share'

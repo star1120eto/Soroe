@@ -7,12 +7,20 @@ type FakeDbConfig = {
   expiredListIds: string[];
   itemsByList?: Record<string, string[]>;
   membersByList?: Record<string, string[]>;
+  // invites/{tokenHash}のID(listIdで引き当てられる招待)。
+  invitesByList?: Record<string, string[]>;
   // このリストのbatch.commit()だけを失敗させ、他のリストが引き続き
   // 処理されることを確認するためのテスト用フック。
   failingListIds?: string[];
 };
 
-function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {}, failingListIds = [] }: FakeDbConfig) {
+function fakeDb({
+  expiredListIds,
+  itemsByList = {},
+  membersByList = {},
+  invitesByList = {},
+  failingListIds = [],
+}: FakeDbConfig) {
   const deleted: unknown[] = [];
   const commitCallSizes: number[] = [];
   let pendingForCurrentBatch: { path: string }[] = [];
@@ -71,6 +79,20 @@ function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {}, failingL
     doc: vi.fn((id: string) => listDoc(id)),
   };
 
+  const invitesCollection = {
+    where: vi.fn((field: string, op: string, listId: string) => {
+      if (field !== "listId" || op !== "==") {
+        throw new Error(`unexpected invites query ${field} ${op}`);
+      }
+      return {
+        get: () =>
+          Promise.resolve({
+            docs: (invitesByList[listId] ?? []).map((inviteId) => ({ ref: { path: `invites/${inviteId}` } })),
+          }),
+      };
+    }),
+  };
+
   const usersCollection = {
     doc: vi.fn((uid: string) => ({
       collection: vi.fn((name: string) => {
@@ -83,7 +105,11 @@ function fakeDb({ expiredListIds, itemsByList = {}, membersByList = {}, failingL
   };
 
   const db = {
-    collection: vi.fn((name: string) => (name === "lists" ? listsCollection : usersCollection)),
+    collection: vi.fn((name: string) => {
+      if (name === "lists") return listsCollection;
+      if (name === "invites") return invitesCollection;
+      return usersCollection;
+    }),
     batch,
   };
 
@@ -121,6 +147,19 @@ describe("purgeExpiredDeletedListsHandler", () => {
     expect(deleted).toContainEqual(expect.objectContaining({ path: "lists/list-1" }));
     expect(deleted).toContainEqual({ path: "users/owner-uid/listRefs/list-1" });
     expect(deleted).toContainEqual({ path: "users/editor-uid/listRefs/list-1" });
+  });
+
+  it("also deletes the list's invites so no inviter ids or dead links are left behind", async () => {
+    const { db, deleted } = fakeDb({
+      expiredListIds: ["list-1"],
+      membersByList: { "list-1": ["owner-uid"] },
+      invitesByList: { "list-1": ["hash-a", "hash-b"] },
+    });
+
+    await purgeExpiredDeletedListsHandler(db as never, 1_000_000);
+
+    expect(deleted).toContainEqual({ path: "invites/hash-a" });
+    expect(deleted).toContainEqual({ path: "invites/hash-b" });
   });
 
   it("purges multiple expired lists independently", async () => {

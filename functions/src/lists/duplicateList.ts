@@ -1,14 +1,15 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { duplicateListRequestSchema, type DuplicateListResponse } from "@soroe/shared";
 
+import { getDisplayName } from "../users/profile";
 import { getPlan } from "./entitlements";
 import { duplicateListTransaction } from "./listStore";
 
 export async function duplicateListHandler(input: unknown, uid: string): Promise<DuplicateListResponse> {
   const { requestId, listId } = duplicateListRequestSchema.parse(input);
 
-  const plan = await getPlan(uid);
-  const result = await duplicateListTransaction(uid, requestId, listId, plan);
+  const [plan, displayName] = await Promise.all([getPlan(uid), getDisplayName(uid)]);
+  const result = await duplicateListTransaction(uid, requestId, listId, plan, displayName);
 
   if (result.status === "not-found") {
     throw new HttpsError("not-found", "リストが見つかりません");

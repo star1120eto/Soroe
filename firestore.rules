@@ -44,10 +44,10 @@ service cloud.firestore {
     match /lists/{listId} {
       allow read: if isMember(listId);
       allow create, delete: if false;
-      // 名前・色・アイコンなど表示用の情報だけをオーナーが直接更新できる。
-      // 所有者やアーカイブ状態の変更はFunctions経由に限る。アーカイブ中は
-      // 読み取り専用のため、resource.data(更新前の値)で判定する。
-      allow update: if isOwner(listId) &&
+      // 名前・色・アイコンなど表示用の情報だけをメンバー(オーナー・編集者)が
+      // 直接更新できる(仕様2.3)。所有者やアーカイブ状態の変更はFunctions経由に
+      // 限る。アーカイブ中は読み取り専用のため、resource.data(更新前の値)で判定する。
+      allow update: if isMember(listId) &&
         resource.data.archivedAt == null &&
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['name', 'color', 'icon', 'updatedAt']) &&
@@ -78,10 +78,21 @@ service cloud.firestore {
       }
 
       // メンバー構成の変更は招待・所有権移譲の検証を伴うためFunctionsに限る。
+      // メンバー削除・退出もmembersドキュメントの削除で権限を即時失効させるが、
+      // 最後のownerを守る検証が要るためFunctions経由に限る(SHARE-004)。
       match /members/{uid} {
         allow read: if isMember(listId);
         allow write: if false;
       }
+    }
+
+    // SHARE-002: 招待。トークンの平文は保存せずドキュメントIDはそのハッシュ。
+    // オーナーだけが自分のリストの招待メタデータ(有効期限・取消状態)を
+    // `listId == X` で絞って読める。作成・取消・受諾の検証はFunctions(Admin SDK)
+    // に限り、非メンバーへのプレビューもgetInvitePreview経由で返す。
+    match /invites/{inviteId} {
+      allow read: if isOwner(resource.data.listId);
+      allow write: if false;
     }
   }
 }

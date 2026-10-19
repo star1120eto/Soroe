@@ -1,6 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { createListRequestSchema, type CreateListResponse } from "@soroe/shared";
 
+import { getDisplayName } from "../users/profile";
 import { getPlan } from "./entitlements";
 import { createListTransaction } from "./listStore";
 
@@ -10,8 +11,8 @@ export async function createListHandler(
 ): Promise<CreateListResponse> {
   const { requestId, ...fields } = createListRequestSchema.parse(input);
 
-  const plan = await getPlan(uid);
-  const result = await createListTransaction(uid, requestId, fields, plan);
+  const [plan, displayName] = await Promise.all([getPlan(uid), getDisplayName(uid)]);
+  const result = await createListTransaction(uid, requestId, fields, plan, displayName);
 
   if (result.status === "limit-reached") {
     throw new HttpsError("resource-exhausted", "Freeプランで作成できるリストは3件までです");

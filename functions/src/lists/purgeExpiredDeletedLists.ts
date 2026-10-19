@@ -13,9 +13,12 @@ type Db = Pick<Firestore, "collection" | "batch">;
 // (duplicateListTransaction/copyItemsInChunksと同じ理由)。
 async function purgeList(db: Db, listId: string): Promise<void> {
   const listRef = db.collection("lists").doc(listId);
-  const [itemsSnap, membersSnap] = await Promise.all([
+  const [itemsSnap, membersSnap, invitesSnap] = await Promise.all([
     listRef.collection("items").get(),
     listRef.collection("members").get(),
+    // 招待(invites/{tokenHash})はリストの外にあるため、リストと一緒に消さないと
+    // 招待者のuidを持つドキュメントが永久に残る。
+    db.collection("invites").where("listId", "==", listId).get(),
   ]);
 
   const refsToDelete = [
@@ -26,6 +29,7 @@ async function purgeList(db: Db, listId: string): Promise<void> {
       // listRefドキュメント自体はここで初めて消える。
       db.collection("users").doc(memberDoc.id).collection("listRefs").doc(listId),
     ]),
+    ...invitesSnap.docs.map((doc) => doc.ref),
     listRef,
   ];
 

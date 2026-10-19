@@ -53,6 +53,9 @@ export const listMemberSchema = z.object({
   listId: z.string().min(1),
   role: listRoleSchema,
   joinedAt: z.number().int().positive(),
+  // 参加時点の表示名を非正規化して持つ(users/{uid}は本人しか読めないため)。
+  // SHARE-001以前に作られたmemberには無いのでnullへ寄せ、UIでフォールバックする。
+  displayName: z.string().trim().min(1).max(30).nullable().default(null),
 });
 export type ListMember = z.infer<typeof listMemberSchema>;
 
