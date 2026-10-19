@@ -1,4 +1,3 @@
-import firestore, { type FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import {
   listItemSchema,
   listMemberSchema,
@@ -14,7 +13,8 @@ import {
 // Firestore型(Timestamp等)をドメイン型へ変換する境界。
 // LIST-001「Firestore型をUIやドメインへ直接公開しない」に対応する。
 
-type FirestoreData = FirebaseFirestoreTypes.DocumentData;
+// ネイティブ(RN Firebase)とWeb(firebase JS SDK)で共通に使うため、Firestoreの型には依存しない。
+type FirestoreData = Record<string, any>;
 
 function toMillis(value: unknown): number | null {
   if (value === null || value === undefined) {
@@ -22,8 +22,10 @@ function toMillis(value: unknown): number | null {
   }
   // オフライン書込直後はserverTimestampがnullで返り、同期後にTimestampへ
   // 置き換わる。呼び出し側が待たずに扱えるよう、その間はnullのままにする。
-  if (value instanceof firestore.Timestamp) {
-    return value.toMillis();
+  // RN FirebaseのTimestampとfirebase JS SDKのTimestampは別クラスのため、instanceofでは
+  // なくtoMillis()を持つかで判定する。
+  if (typeof (value as { toMillis?: unknown }).toMillis === 'function') {
+    return (value as { toMillis: () => number }).toMillis();
   }
   if (typeof value === 'number') {
     return value;
