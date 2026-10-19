@@ -15,6 +15,7 @@ import {
   subscribeToOfficialTemplateItems,
   subscribeToOfficialTemplates,
 } from '@/features/templates/TemplateRepository';
+import { MyTemplateManager } from '@/features/templates/MyTemplateManager';
 import { describeTemplateError } from '@/features/templates/templateErrors';
 import { initialSelection, toggleSelection } from '@/features/templates/templateSelection';
 import { localizeItem, localizeTemplate } from '@/features/templates/templateText';
@@ -230,6 +231,10 @@ export default function TemplateDetailScreen() {
         </View>
 
         <Button label="リストを作成" onPress={onCreatePress} loading={busy} disabled={createBlocked} variant="primary" />
+
+        {source === 'my' && myTemplate ? (
+          <MyTemplateManager uid={profile.uid} template={myTemplate} onDeleted={() => router.back()} />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

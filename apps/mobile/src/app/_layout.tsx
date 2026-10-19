@@ -50,6 +50,7 @@ function RootNavigator() {
       <Stack.Screen name="list/[listId]" options={{ headerShown: true, title: 'リスト' }} />
       <Stack.Screen name="item-edit" options={{ presentation: 'modal', headerShown: true, title: '項目を編集' }} />
       <Stack.Screen name="archived-lists" options={{ headerShown: true, title: 'アーカイブ・削除済み' }} />
+      <Stack.Screen name="save-template" options={{ headerShown: true, title: 'マイテンプレートに保存' }} />
       <Stack.Screen name="template-detail" options={{ headerShown: true, title: 'テンプレート' }} />
       <Stack.Screen name="list-share" options={{ headerShown: true, title: '共有・メンバー' }} />
     </Stack>

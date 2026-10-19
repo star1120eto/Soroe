@@ -299,6 +299,11 @@ export default function ListDetailScreen() {
           )
         ),
       },
+      // 保存は元のリストを変えず、メンバーなら使える。上限判定を伴うためオンライン必須。
+      {
+        text: 'マイテンプレートに保存',
+        onPress: requireOnline(() => router.push({ pathname: '/save-template', params: { listId: list.id } })),
+      },
       // メンバー一覧・招待・退出。オーナーと編集者で画面内の操作が変わる。
       { text: '共有・メンバー', onPress: () => router.push({ pathname: '/list-share', params: { listId: list.id } }) },
     ];

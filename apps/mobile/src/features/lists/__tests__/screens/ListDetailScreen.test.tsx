@@ -158,6 +158,7 @@ describe('ListDetailScreen', () => {
       expect(menuButtons().map((button) => button.text)).toEqual([
         'リストを編集',
         '複製する',
+        'マイテンプレートに保存',
         '共有・メンバー',
         'アーカイブする',
         '削除する',
@@ -175,6 +176,7 @@ describe('ListDetailScreen', () => {
       expect(texts).toContain('リストを編集');
       expect(texts).toContain('共有・メンバー');
       expect(texts).toContain('複製する');
+      expect(texts).toContain('マイテンプレートに保存');
       expect(texts).not.toContain('アーカイブする');
       expect(texts).not.toContain('削除する');
     });
@@ -189,6 +191,8 @@ describe('ListDetailScreen', () => {
       expect(texts).not.toContain('リストを編集');
       expect(texts).not.toContain('アーカイブする');
       expect(texts).toContain('共有・メンバー');
+      // 保存は元のリストを変えないため、アーカイブ中でも使える。
+      expect(texts).toContain('マイテンプレートに保存');
     });
 
     it('opens the share/members screen for the list', async () => {
@@ -298,6 +302,31 @@ describe('ListDetailScreen', () => {
       menuButtons().find((button) => button.text === '共有・メンバー')!.onPress?.();
 
       expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/list-share', params: { listId: 'list-1' } });
+    });
+  });
+
+  describe('save as a my-template (MYTM-02)', () => {
+    it('opens the save screen for the list', async () => {
+      arrange({ asUid: EDITOR });
+      const { findByRole } = await render(<ListDetailScreen />);
+      await fireEvent.press(await findByRole('button', { name: 'メニュー' }));
+
+      await act(async () => {
+        menuButtons().find((button) => button.text === 'マイテンプレートに保存')!.onPress!();
+      });
+
+      expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/save-template', params: { listId: 'list-1' } });
+    });
+
+    it('explains instead of opening the screen while offline (saving needs the server)', async () => {
+      arrange({ offline: true });
+      const { findByRole } = await render(<ListDetailScreen />);
+      await fireEvent.press(await findByRole('button', { name: 'メニュー' }));
+
+      menuButtons().find((button) => button.text === 'マイテンプレートに保存')!.onPress?.();
+
+      expect(Alert.alert).toHaveBeenLastCalledWith('オフラインです', 'オフラインのため使えません。オンライン接続が必要です');
+      expect(mockRouter.push).not.toHaveBeenCalled();
     });
   });
 });
