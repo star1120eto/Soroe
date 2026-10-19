@@ -1,4 +1,4 @@
-import { FieldValue, getFirestore, type DocumentData, type Firestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, type DocumentData } from "firebase-admin/firestore";
 import {
   scaleQuantity,
   type CreateListFromTemplateRequest,
@@ -8,7 +8,8 @@ import {
   type TemplateLanguage,
 } from "@soroe/shared";
 
-import { FIRESTORE_BATCH_CHUNK_SIZE, FREE_MY_TEMPLATE_LIMIT } from "../lists/constants";
+import { FREE_MY_TEMPLATE_LIMIT } from "../lists/constants";
+import { writeItemsInChunks, writeNewList, type NewItem } from "../lists/listCreation";
 import { isUnderActiveListLimit, type Plan } from "../lists/listLimit";
 
 // TMPL-003: マイテンプレートの保存と、テンプレート(公式・マイ)からのリスト作成。
@@ -99,15 +100,6 @@ export type CreateListFromTemplateResult =
   | { status: "not-found" }
   | { status: "invalid-items" }
   | { status: "limit-reached" };
-
-type NewItem = {
-  name: string;
-  quantity: number | null;
-  unit: string | null;
-  category: string | null;
-  note: string | null;
-  checked: boolean;
-};
 
 type ResolvedTemplate = { name: string; type: ListType; color: string; icon: string; items: NewItem[] };
 
@@ -211,34 +203,14 @@ export async function createListFromTemplateTransaction(
       return { status: "limit-reached" as const };
     }
 
-    const listRef = db.collection("lists").doc();
     const now = FieldValue.serverTimestamp();
-    const checkedCount = resolved.items.filter((item) => item.checked).length;
-    tx.set(listRef, {
+    const listRef = writeNewList(tx, db, uid, displayName, {
       name: resolved.name,
       type: resolved.type,
       color: resolved.color,
       icon: resolved.icon,
-      ownerId: uid,
-      createdBy: uid,
-      createdAt: now,
-      updatedAt: now,
-      archivedAt: null,
-      deletedAt: null,
-    });
-    tx.set(listRef.collection("members").doc(uid), { role: "owner", joinedAt: now, displayName });
-    tx.set(userRef.collection("listRefs").doc(listRef.id), {
-      name: resolved.name,
-      type: resolved.type,
-      color: resolved.color,
-      icon: resolved.icon,
-      role: "owner",
       totalCount: resolved.items.length,
-      completedCount: checkedCount,
-      memberCount: 1,
-      updatedAt: now,
-      archivedAt: null,
-      deletedAt: null,
+      completedCount: resolved.items.filter((item) => item.checked).length,
     });
     tx.set(requestRef, { listId: listRef.id, createdAt: now });
 
@@ -251,32 +223,4 @@ export async function createListFromTemplateTransaction(
     await writeItemsInChunks(db, newListId, uid, itemsToCreate);
   }
   return result;
-}
-
-async function writeItemsInChunks(db: Firestore, listId: string, uid: string, items: NewItem[]): Promise<void> {
-  const itemsCollection = db.collection("lists").doc(listId).collection("items");
-  const now = FieldValue.serverTimestamp();
-
-  for (let offset = 0; offset < items.length; offset += FIRESTORE_BATCH_CHUNK_SIZE) {
-    const batch = db.batch();
-    items.slice(offset, offset + FIRESTORE_BATCH_CHUNK_SIZE).forEach((item, index) => {
-      batch.set(itemsCollection.doc(), {
-        name: item.name,
-        quantity: item.quantity,
-        unit: item.unit,
-        category: item.category,
-        note: item.note,
-        assigneeId: null,
-        dueAt: null,
-        completedAt: item.checked ? now : null,
-        completedBy: item.checked ? uid : null,
-        sortOrder: (offset + index + 1) * 1000,
-        createdBy: uid,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      });
-    });
-    await batch.commit();
-  }
 }
