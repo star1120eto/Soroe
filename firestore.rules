@@ -134,7 +134,11 @@ service cloud.firestore {
     // AI-001: 生成の状態。IDは `${uid}_${requestId}`。本人だけが自分の結果を読める。書込・回数(aiUsage)・
     // 同時実行の印(users/{uid}/aiState)は、回数を原子的に更新するFunctions(Admin SDK)に限る。
     match /aiRequests/{requestDocId} {
-      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      // 結果画面は、サーバーが予約する前(文書がまだ無い間)から購読を始める。文書が無いときは
+      // IDの接頭辞(uid)で、あるときは文書のuidで、本人かを判定する。
+      allow read: if isSignedIn() &&
+        requestDocId.matches(request.auth.uid + '_.*') &&
+        (resource == null || resource.data.uid == request.auth.uid);
       allow write: if false;
     }
   }

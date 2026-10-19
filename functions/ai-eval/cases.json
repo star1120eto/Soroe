@@ -1,0 +1,913 @@
+[
+  {
+    "id": "travel-01",
+    "description": "旅行: 大人2子ども0 1泊 winter",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 1,
+      "season": "winter",
+      "features": [
+        "hot-spring"
+      ],
+      "notes": "温泉旅館に泊まる",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-02",
+    "description": "旅行: 大人2子ども1 2泊 summer",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "infant"
+      ],
+      "nights": 2,
+      "season": "summer",
+      "features": [
+        "car"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-03",
+    "description": "旅行: 大人2子ども2 1泊 autumn",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 2,
+      "ageBands": [
+        "preschool",
+        "elementary"
+      ],
+      "nights": 1,
+      "season": "autumn",
+      "features": [
+        "car",
+        "meals-included"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-04",
+    "description": "旅行: 大人4子ども0 3泊 spring",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 4,
+      "children": 0,
+      "ageBands": [],
+      "nights": 3,
+      "season": "spring",
+      "features": [
+        "rain"
+      ],
+      "notes": "雨の予報",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-05",
+    "description": "旅行: 大人1子ども0 0泊 summer",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 1,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "summer",
+      "features": [],
+      "notes": "日帰りで一人旅",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-06",
+    "description": "旅行: 大人2子ども1 2泊 winter",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "preschool"
+      ],
+      "nights": 2,
+      "season": "winter",
+      "features": [
+        "hot-spring",
+        "car"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-07",
+    "description": "旅行: 大人3子ども2 3泊 summer",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 3,
+      "children": 2,
+      "ageBands": [
+        "elementary",
+        "teen"
+      ],
+      "nights": 3,
+      "season": "summer",
+      "features": [
+        "car"
+      ],
+      "notes": "海水浴に行く",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-08",
+    "description": "旅行: 大人2子ども0 5泊 autumn",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 5,
+      "season": "autumn",
+      "features": [],
+      "notes": "紅葉を見に行く",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-09",
+    "description": "旅行: 大人2子ども1 1泊 spring",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "infant"
+      ],
+      "nights": 1,
+      "season": "spring",
+      "features": [
+        "meals-included"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-10",
+    "description": "旅行: 大人5子ども3 2泊 winter",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 5,
+      "children": 3,
+      "ageBands": [
+        "preschool",
+        "elementary",
+        "teen"
+      ],
+      "nights": 2,
+      "season": "winter",
+      "features": [
+        "car"
+      ],
+      "notes": "帰省",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-11",
+    "description": "旅行: 大人2子ども0 2泊 summer",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 2,
+      "season": "summer",
+      "features": [
+        "beginner"
+      ],
+      "notes": "初めての海外旅行ではない",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-12",
+    "description": "旅行: 大人1子ども1 1泊 autumn",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 1,
+      "children": 1,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 1,
+      "season": "autumn",
+      "features": [],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-13",
+    "description": "旅行: 大人2子ども2 4泊 spring",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 2,
+      "ageBands": [
+        "infant",
+        "preschool"
+      ],
+      "nights": 4,
+      "season": "spring",
+      "features": [
+        "car",
+        "rain"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-14",
+    "description": "旅行: 大人6子ども0 2泊 winter",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 6,
+      "children": 0,
+      "ageBands": [],
+      "nights": 2,
+      "season": "winter",
+      "features": [
+        "hot-spring"
+      ],
+      "notes": "同窓会の旅行",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "travel-15",
+    "description": "旅行: 大人2子ども1 0泊 summer",
+    "input": {
+      "useCase": "travel",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "teen"
+      ],
+      "nights": 0,
+      "season": "summer",
+      "features": [],
+      "notes": "テーマパーク",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-01",
+    "description": "登山: 大人2子ども0 autumn",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "autumn",
+      "features": [
+        "beginner"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-02",
+    "description": "登山: 大人3子ども1 summer",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 3,
+      "children": 1,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 0,
+      "season": "summer",
+      "features": [
+        "beginner"
+      ],
+      "notes": "低山のハイキング",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-03",
+    "description": "登山: 大人2子ども0 summer",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 1,
+      "season": "summer",
+      "features": [],
+      "notes": "山小屋に泊まる",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-04",
+    "description": "登山: 大人1子ども0 winter",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 1,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "winter",
+      "features": [],
+      "notes": "雪の低山",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-05",
+    "description": "登山: 大人4子ども2 spring",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 4,
+      "children": 2,
+      "ageBands": [
+        "elementary",
+        "teen"
+      ],
+      "nights": 0,
+      "season": "spring",
+      "features": [
+        "rain"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-06",
+    "description": "登山: 大人2子ども0 autumn",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "autumn",
+      "features": [
+        "car"
+      ],
+      "notes": "紅葉の山",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-07",
+    "description": "登山: 大人2子ども1 summer",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "preschool"
+      ],
+      "nights": 0,
+      "season": "summer",
+      "features": [
+        "beginner"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-08",
+    "description": "登山: 大人3子ども0 summer",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 3,
+      "children": 0,
+      "ageBands": [],
+      "nights": 2,
+      "season": "summer",
+      "features": [],
+      "notes": "テント泊の縦走",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-09",
+    "description": "登山: 大人2子ども0 spring",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "spring",
+      "features": [
+        "beginner",
+        "rain"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-10",
+    "description": "登山: 大人5子ども0 winter",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 5,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "winter",
+      "features": [],
+      "notes": "初日の出登山",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-11",
+    "description": "登山: 大人2子ども1 autumn",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "teen"
+      ],
+      "nights": 0,
+      "season": "autumn",
+      "features": [],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-12",
+    "description": "登山: 大人1子ども0 spring",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 1,
+      "children": 0,
+      "ageBands": [],
+      "nights": 1,
+      "season": "spring",
+      "features": [],
+      "notes": "ソロキャンプと登山",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-13",
+    "description": "登山: 大人2子ども0 summer",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "summer",
+      "features": [
+        "rain"
+      ],
+      "notes": "雨天決行",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-14",
+    "description": "登山: 大人3子ども3 summer",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 3,
+      "children": 3,
+      "ageBands": [
+        "elementary",
+        "teen"
+      ],
+      "nights": 0,
+      "season": "summer",
+      "features": [
+        "beginner"
+      ],
+      "notes": null,
+      "language": "ja"
+    }
+  },
+  {
+    "id": "hiking-15",
+    "description": "登山: 大人2子ども0 winter",
+    "input": {
+      "useCase": "hiking",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "winter",
+      "features": [
+        "beginner"
+      ],
+      "notes": "樹氷を見に行く",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-01",
+    "description": "買い物: 大人2子ども0 1週間分の食材",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": null,
+      "features": [],
+      "notes": "1週間分の食材",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-02",
+    "description": "買い物: 大人4子ども2 家族の1週間分",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 4,
+      "children": 2,
+      "ageBands": [
+        "preschool",
+        "elementary"
+      ],
+      "nights": 0,
+      "season": null,
+      "features": [],
+      "notes": "家族の1週間分",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-03",
+    "description": "買い物: 大人1子ども0 一人暮らしの買い出し",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 1,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": null,
+      "features": [],
+      "notes": "一人暮らしの買い出し",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-04",
+    "description": "買い物: 大人2子ども1 離乳食と日用品",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "infant"
+      ],
+      "nights": 0,
+      "season": null,
+      "features": [],
+      "notes": "離乳食と日用品",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-05",
+    "description": "買い物: 大人3子ども0 バーベキューの買い出し",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 3,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "summer",
+      "features": [],
+      "notes": "バーベキューの買い出し",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-06",
+    "description": "買い物: 大人2子ども0 鍋パーティー",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "winter",
+      "features": [],
+      "notes": "鍋パーティー",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-07",
+    "description": "買い物: 大人6子ども3 運動会のお弁当",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 6,
+      "children": 3,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 0,
+      "season": "autumn",
+      "features": [],
+      "notes": "運動会のお弁当",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-08",
+    "description": "買い物: 大人2子ども0 ホームパーティーの準備",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 2,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": null,
+      "features": [],
+      "notes": "ホームパーティーの準備",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-09",
+    "description": "買い物: 大人1子ども0 暑い時期の常備品",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 1,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "summer",
+      "features": [],
+      "notes": "暑い時期の常備品",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "shopping-10",
+    "description": "買い物: 大人4子ども0 お花見の買い出し",
+    "input": {
+      "useCase": "shopping",
+      "customText": null,
+      "adults": 4,
+      "children": 0,
+      "ageBands": [],
+      "nights": 0,
+      "season": "spring",
+      "features": [],
+      "notes": "お花見の買い出し",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-01",
+    "description": "学校行事: 遠足 autumn",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "preschool"
+      ],
+      "nights": 0,
+      "season": "autumn",
+      "features": [],
+      "notes": "遠足",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-02",
+    "description": "学校行事: 運動会 autumn",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 0,
+      "season": "autumn",
+      "features": [],
+      "notes": "運動会",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-03",
+    "description": "学校行事: 授業参観 spring",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 0,
+      "season": "spring",
+      "features": [],
+      "notes": "授業参観",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-04",
+    "description": "学校行事: 入園準備 spring",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 1,
+      "children": 1,
+      "ageBands": [
+        "preschool"
+      ],
+      "nights": 0,
+      "season": "spring",
+      "features": [],
+      "notes": "入園準備",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-05",
+    "description": "学校行事: 林間学校 summer",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 1,
+      "season": "summer",
+      "features": [],
+      "notes": "林間学校",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-06",
+    "description": "学校行事: 修学旅行 spring",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "teen"
+      ],
+      "nights": 2,
+      "season": "spring",
+      "features": [],
+      "notes": "修学旅行",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-07",
+    "description": "学校行事: プール開き summer",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 2,
+      "ageBands": [
+        "preschool",
+        "elementary"
+      ],
+      "nights": 0,
+      "season": "summer",
+      "features": [
+        "rain"
+      ],
+      "notes": "プール開き",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-08",
+    "description": "学校行事: スキー教室 winter",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 1,
+      "children": 1,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 0,
+      "season": "winter",
+      "features": [],
+      "notes": "スキー教室",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-09",
+    "description": "学校行事: お遊戯会 winter",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "preschool"
+      ],
+      "nights": 0,
+      "season": "winter",
+      "features": [],
+      "notes": "お遊戯会",
+      "language": "ja"
+    }
+  },
+  {
+    "id": "school-10",
+    "description": "学校行事: 雨の日の遠足 autumn",
+    "input": {
+      "useCase": "school",
+      "customText": null,
+      "adults": 2,
+      "children": 1,
+      "ageBands": [
+        "elementary"
+      ],
+      "nights": 0,
+      "season": "autumn",
+      "features": [
+        "rain"
+      ],
+      "notes": "雨の日の遠足",
+      "language": "ja"
+    }
+  }
+]

@@ -549,6 +549,14 @@ describe("ai generation", () => {
     await assertFails(testEnv.unauthenticatedContext().firestore().doc(`aiRequests/${ME}_r1`).get());
   });
 
+  it("lets the owner subscribe to a request that does not exist yet (the screen opens before the server reserves it)", async () => {
+    const mine = testEnv.authenticatedContext(ME).firestore();
+    const missing = await assertSucceeds(mine.doc(`aiRequests/${ME}_not-yet`).get());
+    expect(missing.exists).toBe(false);
+    // 他人のIDの(まだ無い)文書は、存在の有無に関わらず読めない。
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`aiRequests/${ME}_not-yet`).get());
+  });
+
   it("never lets a client write a request, usage or the active marker", async () => {
     const db = testEnv.authenticatedContext(ME).firestore();
     await assertFails(db.doc(`aiRequests/${ME}_r2`).set({ uid: ME, status: "succeeded" }));
