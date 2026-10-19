@@ -68,7 +68,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "e2e:share": "node scripts/e2e-share-ac01.mjs",
-    "e2e:offline": "node scripts/e2e-offline-ac03.mjs"
+    "e2e:offline": "node scripts/e2e-offline-ac03.mjs",
+    "e2e:templates": "node scripts/e2e-templates-ac04.mjs"
   },
   "private": true
 }
