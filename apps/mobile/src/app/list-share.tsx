@@ -18,6 +18,8 @@ import {
 } from '@/design-system';
 import { subscribeToList, subscribeToListMembers } from '@/features/lists/ListRepository';
 import { useSession } from '@/features/session/SessionProvider';
+import { useConnectivity } from '@/features/connectivity/ConnectivityProvider';
+import { OFFLINE_REQUIRED_MESSAGE } from '@/features/connectivity/offlineMessages';
 import { isAccessDeniedError } from '@/features/sharing/accessErrors';
 import { formatInviteExpiry, isInviteActive } from '@/features/sharing/inviteExpiry';
 import { buildInviteShareMessage, buildInviteUrl, generateInviteToken } from '@/features/sharing/inviteToken';
@@ -40,6 +42,8 @@ export default function ListShareScreen() {
   const router = useRouter();
   const { listId } = useLocalSearchParams<{ listId: string }>();
   const { profile } = useSession();
+  // 招待・メンバー管理・退出はサーバー検証を伴うため、オフラインでは押せなくして理由を出す。
+  const { isOffline } = useConnectivity();
 
   const [list, setList] = useState<List | null | undefined>(undefined);
   const [members, setMembers] = useState<ListMember[] | null>(null);
@@ -226,6 +230,7 @@ export default function ListShareScreen() {
     <SafeAreaView style={styles.safeArea} edges={['bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         {actionError ? <Banner message={actionError} variant="danger" /> : null}
+        {isOffline ? <Banner message={OFFLINE_REQUIRED_MESSAGE} variant="warning" /> : null}
 
         <View style={styles.section}>
           <Text style={[Typography.heading, styles.sectionTitle]}>メンバー({sortedMembers.length}人)</Text>
@@ -241,7 +246,7 @@ export default function ListShareScreen() {
                   label={`${memberDisplayName(member, profile.uid)}を管理`}
                   onPress={() => openMemberMenu(member)}
                   variant="secondary"
-                  disabled={busy}
+                  disabled={busy || isOffline}
                 />
               ) : null}
             </View>
@@ -268,11 +273,11 @@ export default function ListShareScreen() {
                       label={`リンク${index + 1}を取消`}
                       onPress={() => confirmRevoke(invite)}
                       variant="secondary"
-                      disabled={busy}
+                      disabled={busy || isOffline}
                     />
                   </View>
                 ))}
-                <Button label="招待リンクを発行して共有" onPress={shareInviteLink} loading={busy} />
+                <Button label="招待リンクを発行して共有" onPress={shareInviteLink} loading={busy} disabled={isOffline} />
                 <Text style={[Typography.caption, styles.secondary]}>
                   リンクは1人用で、参加すると使えなくなります。複数の人を招待するときは、人ごとにリンクを発行してください。有効期限は7日間です。招待にはオンライン接続が必要です。
                 </Text>
@@ -281,7 +286,7 @@ export default function ListShareScreen() {
           </View>
         ) : (
           <View style={styles.section}>
-            <Button label="リストから退出" onPress={confirmLeave} variant="destructive" disabled={busy} />
+            <Button label="リストから退出" onPress={confirmLeave} variant="destructive" disabled={busy || isOffline} />
           </View>
         )}
 

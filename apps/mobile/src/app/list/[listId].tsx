@@ -59,6 +59,9 @@ import { useSession } from '@/features/session/SessionProvider';
 import { isAccessDeniedError } from '@/features/sharing/accessErrors';
 import { assigneeChipLabel } from '@/features/sharing/memberLabels';
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
+import { useConnectivity } from '@/features/connectivity/ConnectivityProvider';
+import { OfflineBanner } from '@/features/connectivity/OfflineBanner';
+import { OFFLINE_REQUIRED_MESSAGE } from '@/features/connectivity/offlineMessages';
 
 // itemsSnapshotがnullの間の`?? []`が毎レンダー新しい配列になり、それに依存する
 // useMemoが無駄に再計算されるのを避けるための安定した既定値。
@@ -141,9 +144,12 @@ export default function ListDetailScreen() {
   }, [listId]);
 
   const items = itemsSnapshot?.items ?? EMPTY_ITEMS;
-  // 保存がサーバーへ届くまでの一瞬は出さない(出すと帯が点滅して内容が押し下げられる)。
-  // オフラインなどで続く場合だけ見せる。
-  const showPendingBanner = useDelayedFlag(itemsSnapshot?.hasPendingWrites ?? false, PENDING_BANNER_DELAY_MS);
+  // 保存がサーバーへ届くまでの一瞬は「同期中」を出さない(出すと帯が点滅して内容が押し下げられる)。
+  // オフラインの帯と件数は、接続状態(ConnectivityProvider)が3秒続いたときだけ出る。
+  const { isOffline, isRetrying, retry } = useConnectivity();
+  const pendingCount = useDelayedFlag((itemsSnapshot?.pendingCount ?? 0) > 0, PENDING_BANNER_DELAY_MS)
+    ? (itemsSnapshot?.pendingCount ?? 0)
+    : 0;
   const isOwner = list != null && profile != null && list.ownerId === profile.uid;
   const categories = useMemo(() => uniqueCategories(items), [items]);
   const filteredItems = useMemo(() => filterListItems(items, filters), [items, filters]);
@@ -267,6 +273,15 @@ export default function ListDetailScreen() {
     );
   };
 
+  // 複製・アーカイブ・削除はサーバー検証を伴うため、オフラインでは実行せず理由を伝える。
+  const requireOnline = (action: () => void) => () => {
+    if (isOffline) {
+      Alert.alert('オフラインです', OFFLINE_REQUIRED_MESSAGE);
+      return;
+    }
+    action();
+  };
+
   const openListMenu = () => {
     if (!list) {
       return;
@@ -274,14 +289,15 @@ export default function ListDetailScreen() {
     const buttons: AlertButton[] = [
       {
         text: '複製する',
-        onPress: () =>
+        onPress: requireOnline(() =>
           runOwnerAction(
             async () => {
               const result = await duplicateList(list.id, randomUUID());
               router.push(`/list/${result.listId}`);
             },
             () => {}
-          ),
+          )
+        ),
       },
       // メンバー一覧・招待・退出。オーナーと編集者で画面内の操作が変わる。
       { text: '共有・メンバー', onPress: () => router.push({ pathname: '/list-share', params: { listId: list.id } }) },
@@ -300,9 +316,9 @@ export default function ListDetailScreen() {
       // アーカイブ・削除はオーナーのみ(仕様2.3)。
       buttons.push({
         text: 'アーカイブする',
-        onPress: () => runOwnerAction(() => archiveList(list.id), () => router.back()),
+        onPress: requireOnline(() => runOwnerAction(() => archiveList(list.id), () => router.back())),
       });
-      buttons.push({ text: '削除する', style: 'destructive', onPress: confirmDelete });
+      buttons.push({ text: '削除する', style: 'destructive', onPress: requireOnline(confirmDelete) });
     }
     buttons.push({ text: 'キャンセル', style: 'cancel' });
     Alert.alert(list.name, undefined, buttons);
@@ -370,7 +386,7 @@ export default function ListDetailScreen() {
           {isReadOnly ? (
             <Banner message="アーカイブ中のため読み取り専用です。編集するにはアクティブに戻してください。" variant="warning" />
           ) : null}
-          {showPendingBanner ? <Banner message="未同期の変更があります" variant="info" /> : null}
+          <OfflineBanner isOffline={isOffline} pendingCount={isOffline ? (itemsSnapshot.pendingCount) : pendingCount} isRetrying={isRetrying} onRetry={retry} />
           {duplicateWarning ? <Banner message={duplicateWarning} variant="warning" /> : null}
 
           <Input

@@ -15,6 +15,8 @@ import {
   Typography,
   isPhIconName,
 } from '@/design-system';
+import { useConnectivity } from '@/features/connectivity/ConnectivityProvider';
+import { OfflineBanner } from '@/features/connectivity/OfflineBanner';
 import { FREE_ACTIVE_LIST_LIMIT, colorValueForToken } from '@/features/lists/listOptions';
 import { subscribeToUserLists } from '@/features/lists/ListRepository';
 import { useSession } from '@/features/session/SessionProvider';
@@ -33,6 +35,7 @@ export default function ListScreen() {
   const [lists, setLists] = useState<UserListRef[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const { isOffline, isRetrying, retry } = useConnectivity();
 
   useEffect(() => {
     return subscribeToUserLists(
@@ -52,6 +55,11 @@ export default function ListScreen() {
   if (error) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        {isOffline ? (
+          <View style={styles.content}>
+            <OfflineBanner isOffline={isOffline} pendingCount={0} isRetrying={isRetrying} onRetry={retry} />
+          </View>
+        ) : null}
         <ErrorState
           title="読み込みに失敗しました"
           description={error}
@@ -77,6 +85,11 @@ export default function ListScreen() {
   if (lists.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        {isOffline ? (
+          <View style={styles.content}>
+            <OfflineBanner isOffline={isOffline} pendingCount={0} isRetrying={isRetrying} onRetry={retry} />
+          </View>
+        ) : null}
         <EmptyState
           title="リストがありません"
           description="最初のリストを作成しましょう"
@@ -90,6 +103,7 @@ export default function ListScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
+        <OfflineBanner isOffline={isOffline} pendingCount={0} isRetrying={isRetrying} onRetry={retry} />
         <View style={styles.header}>
           <Text style={[Typography.title, styles.headerTitle]}>リスト</Text>
           <Text style={[Typography.caption, styles.headerCount]}>

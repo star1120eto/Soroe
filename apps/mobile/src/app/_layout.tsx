@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { useAppFonts } from '@/design-system';
+import { ConnectivityProvider } from '@/features/connectivity/ConnectivityProvider';
 import { SessionProvider, useSession } from '@/features/session/SessionProvider';
 import { connectEmulators } from '@/lib/firebase/connectEmulators';
 import { initializeWebFirebase } from '@/lib/firebase/initializeWebFirebase';
@@ -57,7 +58,9 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <SessionProvider>
-      <RootNavigator />
+      <ConnectivityProvider>
+        <RootNavigator />
+      </ConnectivityProvider>
     </SessionProvider>
   );
 }

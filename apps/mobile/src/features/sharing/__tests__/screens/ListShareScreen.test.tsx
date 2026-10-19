@@ -3,6 +3,7 @@ import { Alert, Share, type AlertButton } from 'react-native';
 import type { List, ListMember } from '@soroe/shared';
 
 import ListShareScreen from '../../../../app/list-share';
+import { useConnectivity } from '../../../connectivity/ConnectivityProvider';
 import { subscribeToList, subscribeToListMembers } from '../../../lists/ListRepository';
 import { useSession } from '../../../session/SessionProvider';
 import {
@@ -24,6 +25,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('expo-crypto', () => ({ getRandomBytes: () => new Uint8Array(32).fill(0xab), randomUUID: () => 'uuid' }));
 jest.mock('../../../session/SessionProvider', () => ({ useSession: jest.fn() }));
+jest.mock('../../../connectivity/ConnectivityProvider', () => ({ useConnectivity: jest.fn() }));
 jest.mock('../../../lists/ListRepository', () => ({ subscribeToList: jest.fn(), subscribeToListMembers: jest.fn() }));
 jest.mock('../../ShareRepository', () => ({
   createInvite: jest.fn(),
@@ -61,13 +63,16 @@ function arrange({
   list = baseList,
   invites = [],
   membersError,
+  offline = false,
 }: {
+  offline?: boolean;
   asUid?: string;
   list?: List;
   invites?: ActiveInvite[];
   membersError?: { code: string };
 } = {}) {
   jest.mocked(useSession).mockReturnValue({ profile: { uid: asUid } } as ReturnType<typeof useSession>);
+  jest.mocked(useConnectivity).mockReturnValue({ isOffline: offline, isRetrying: false, retry: jest.fn() });
   jest.mocked(subscribeToList).mockImplementation((_id, onChange) => {
     onChange(list);
     return jest.fn();
@@ -358,5 +363,35 @@ describe('ListShareScreen', () => {
 
     expect(await findByText('読み込みに失敗しました')).toBeTruthy();
     expect(queryByText('アクセスできなくなりました')).toBeNull();
+  });
+
+  describe('while offline (OFF-001: online-only actions say why)', () => {
+    const OFFLINE_REASON = 'オフラインのため使えません。オンライン接続が必要です';
+
+    it('disables inviting, cancelling a link and managing members for the owner, and says why', async () => {
+      arrange({ offline: true, invites: [{ inviteId: 'a', expiresAt: Date.now() + 86_400_000 }] });
+      const { getByRole, getByText } = await render(<ListShareScreen />);
+
+      expect(getByText(OFFLINE_REASON)).toBeTruthy();
+      expect(getByRole('button', { name: '招待リンクを発行して共有' })).toBeDisabled();
+      expect(getByRole('button', { name: 'リンク1を取消' })).toBeDisabled();
+      expect(getByRole('button', { name: 'はなこを管理' })).toBeDisabled();
+    });
+
+    it('disables leaving for an editor, and says why', async () => {
+      arrange({ offline: true, asUid: EDITOR });
+      const { getByRole, getByText } = await render(<ListShareScreen />);
+
+      expect(getByText(OFFLINE_REASON)).toBeTruthy();
+      expect(getByRole('button', { name: 'リストから退出' })).toBeDisabled();
+    });
+
+    it('keeps everything enabled while online', async () => {
+      arrange();
+      const { getByRole, queryByText } = await render(<ListShareScreen />);
+
+      expect(queryByText(OFFLINE_REASON)).toBeNull();
+      expect(getByRole('button', { name: '招待リンクを発行して共有' })).not.toBeDisabled();
+    });
   });
 });
