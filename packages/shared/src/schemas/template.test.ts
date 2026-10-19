@@ -71,6 +71,11 @@ describe("scaleQuantity", () => {
     expect(scaleQuantity({ quantity: 2, perPerson: false }, 4)).toBe(2);
   });
 
+  it("does not leak floating-point noise into the scaled quantity", () => {
+    expect(scaleQuantity({ quantity: 0.1, perPerson: true }, 3)).toBe(0.3);
+    expect(scaleQuantity({ quantity: 0.7, perPerson: true }, 3)).toBe(2.1);
+  });
+
   it("keeps an unset quantity unset", () => {
     expect(scaleQuantity({ quantity: null, perPerson: true }, 4)).toBeNull();
   });

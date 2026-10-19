@@ -1,7 +1,7 @@
 import firestore from '@react-native-firebase/firestore';
 import type { MyTemplate, MyTemplateItem, OfficialTemplate, OfficialTemplateItem } from '@soroe/shared';
 
-import { toMyTemplate, toOfficialTemplate, toOfficialTemplateItem } from './converters';
+import { parseValid, toMyTemplate, toOfficialTemplate, toOfficialTemplateItem } from './converters';
 
 // テンプレートのFirestoreへの窓口。公式は読み取り専用(内容はseedで反映する)。マイテンプレートの
 // 作成はCallable(TemplateCallables.ts)で、名前・説明の変更、項目を外す、削除はRulesの範囲で
@@ -23,7 +23,7 @@ export function subscribeToOfficialTemplates(
     .where('published', '==', true)
     .onSnapshot(
       (snapshot) =>
-        onChange(snapshot.docs.map((doc) => toOfficialTemplate(doc.id, doc.data())).sort((a, b) => a.priority - b.priority)),
+        onChange(parseValid(snapshot.docs, (doc) => toOfficialTemplate(doc.id, doc.data())).sort((a, b) => a.priority - b.priority)),
       onError
     );
 }
@@ -39,7 +39,7 @@ export function subscribeToOfficialTemplateItems(
     .collection('items')
     .onSnapshot(
       (snapshot) =>
-        onChange(snapshot.docs.map((doc) => toOfficialTemplateItem(doc.id, doc.data())).sort((a, b) => a.sortOrder - b.sortOrder)),
+        onChange(parseValid(snapshot.docs, (doc) => toOfficialTemplateItem(doc.id, doc.data())).sort((a, b) => a.sortOrder - b.sortOrder)),
       onError
     );
 }
@@ -51,7 +51,7 @@ export function subscribeToMyTemplates(
 ): () => void {
   return myTemplatesCollection(uid).onSnapshot(
     (snapshot) =>
-      onChange(snapshot.docs.map((doc) => toMyTemplate(doc.id, doc.data())).sort((a, b) => a.createdAt - b.createdAt)),
+      onChange(parseValid(snapshot.docs, (doc) => toMyTemplate(doc.id, doc.data())).sort((a, b) => a.createdAt - b.createdAt)),
     onError
   );
 }
@@ -66,7 +66,8 @@ export function subscribeToMyTemplate(
     .doc(templateId)
     .onSnapshot((snapshot) => {
       const data = snapshot.data();
-      onChange(data ? toMyTemplate(snapshot.id, data) : null);
+      // 不正なドキュメントは「見つからない」として扱う(例外でコールバックを壊さない)。
+      onChange(data ? (parseValid([{ id: snapshot.id }], () => toMyTemplate(snapshot.id, data))[0] ?? null) : null);
     }, onError);
 }
 

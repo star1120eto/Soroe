@@ -50,6 +50,8 @@ export default function TemplateDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // 自分の削除で画面を閉じる間は、購読がnullを返しても「見つかりません」を出さない。
+  const [leaving, setLeaving] = useState(false);
   const [requestId] = useState(() => randomUUID());
 
   const uid = profile?.uid ?? null;
@@ -119,6 +121,9 @@ export default function TemplateDetailScreen() {
     return <Redirect href="/" />;
   }
 
+  if (leaving) {
+    return <SafeAreaView style={styles.safeArea} />;
+  }
   if (loadFailed || view === null) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -233,7 +238,10 @@ export default function TemplateDetailScreen() {
         <Button label="リストを作成" onPress={onCreatePress} loading={busy} disabled={createBlocked} variant="primary" />
 
         {source === 'my' && myTemplate ? (
-          <MyTemplateManager uid={profile.uid} template={myTemplate} onDeleted={() => router.back()} />
+          <MyTemplateManager uid={profile.uid} template={myTemplate} onDeleted={() => {
+              setLeaving(true);
+              router.back();
+            }} />
         ) : null}
       </ScrollView>
     </SafeAreaView>

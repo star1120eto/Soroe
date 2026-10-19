@@ -1,4 +1,4 @@
-import { toMyTemplate, toOfficialTemplate, toOfficialTemplateItem } from '../converters';
+import { parseValid, toMyTemplate, toOfficialTemplate, toOfficialTemplateItem } from '../converters';
 
 const officialData = {
   category: 'outdoor',
@@ -45,5 +45,18 @@ describe('template converters', () => {
     expect(template.createdAt).toBe(1000);
     expect(template.updatedAt).toBeGreaterThan(0);
     expect(template.items).toHaveLength(1);
+  });
+
+  it('skips an invalid document instead of failing the whole list', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const docs = [
+      { id: 'good', data: () => officialData },
+      { id: 'bad', data: () => ({ ...officialData, category: 'not-a-category' }) },
+    ];
+
+    const templates = parseValid(docs, (doc) => toOfficialTemplate(doc.id, doc.data()));
+
+    expect(templates.map((template) => template.id)).toEqual(['good']);
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });

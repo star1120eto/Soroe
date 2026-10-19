@@ -516,6 +516,13 @@ describe("templates", () => {
     );
   });
 
+  it("rejects a description that is not a short string or null", async () => {
+    const mine = testEnv.authenticatedContext(MYSELF).firestore().doc(`users/${MYSELF}/myTemplates/t1`);
+    await assertFails(mine.update({ description: "あ".repeat(201), updatedAt: new Date() }));
+    await assertFails(mine.update({ description: 123, updatedAt: new Date() }));
+    await assertSucceeds(mine.update({ description: null, updatedAt: new Date() }));
+  });
+
   it("lets only the owner delete a my-template", async () => {
     await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`users/${MYSELF}/myTemplates/t1`).delete());
     await assertSucceeds(testEnv.authenticatedContext(MYSELF).firestore().doc(`users/${MYSELF}/myTemplates/t1`).delete());

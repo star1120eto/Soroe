@@ -289,6 +289,14 @@ describe("createListFromTemplateTransaction: my templates", () => {
     expect((await db.doc(`users/${UID}/listRefs/${list.id}`).get()).data()).toMatchObject({ totalCount: 2, completedCount: 1 });
   });
 
+  it("refuses a my-template whose items are malformed and creates nothing", async () => {
+    // myTemplatesのitemsはクライアントが書ける(Rulesは件数だけ見る)ため、サーバーが検証する。
+    await seedMyTemplate(UID, [item("a", "あ".repeat(101)), item("b", "寝袋")]);
+
+    await expect(createListFromTemplateTransaction(UID, "req-1", mine(), "free", null)).resolves.toEqual({ status: "invalid-items" });
+    expect(await listsOf()).toHaveLength(0);
+  });
+
   it("does not use another user's template", async () => {
     await seedMyTemplate("someone-else");
 

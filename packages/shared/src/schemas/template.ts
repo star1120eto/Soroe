@@ -82,7 +82,8 @@ export function scaleQuantity(item: { quantity: number | null; perPerson: boolea
   if (item.quantity === null || !item.perPerson) {
     return item.quantity;
   }
-  return item.quantity * partySize;
+  // 0.1 * 3 のような浮動小数点の誤差(0.30000000000000004)が数量に出ないよう、小数第3位で丸める。
+  return Math.round(item.quantity * partySize * 1000) / 1000;
 }
 
 // ---- マイテンプレート(users/{uid}/myTemplates/{id}) ----

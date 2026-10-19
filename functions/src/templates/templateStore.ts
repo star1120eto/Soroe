@@ -3,6 +3,7 @@ import {
   scaleQuantity,
   type CreateListFromTemplateRequest,
   type ListType,
+  myTemplateItemSchema,
   type MyTemplateItem,
   type TemplateLanguage,
 } from "@soroe/shared";
@@ -185,7 +186,13 @@ export async function createListFromTemplateTransaction(
         return { status: "not-found" as const };
       }
       const template = templateSnap.data()!;
-      const templateItems = template.items as MyTemplateItem[];
+      // itemsはクライアントが書ける(Rulesは件数しか見ない)ため、リストへ書く前にサーバーで検証する。
+      // 不正な項目があると、リストを共有した相手の画面が壊れるため、何も作らない。
+      const parsedItems = myTemplateItemSchema.array().safeParse(template.items);
+      if (!parsedItems.success) {
+        return { status: "invalid-items" as const };
+      }
+      const templateItems: MyTemplateItem[] = parsedItems.data;
       const ids = new Set(templateItems.map((item) => item.id));
       if ([...selected].some((id) => !ids.has(id))) {
         return { status: "invalid-items" as const };

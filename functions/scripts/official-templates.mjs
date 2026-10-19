@@ -3,7 +3,7 @@
 //
 // 使い方(リポジトリルートで。先に pnpm run build:shared):
 //   pnpm run templates:validate          # 全JSONを共有スキーマで検証する
-//   pnpm run templates:seed              # Firestore Emulatorへ投入する(冪等。同じIDは上書き)
+//   pnpm run templates:seed              # Firestore Emulatorへ投入する(冪等。同じIDは上書き、データに無いIDは削除)
 //
 // seedはEmulator専用。FIRESTORE_EMULATOR_HOST が無ければ、本番へ誤って書かないよう即座に終了する
 // (本番への反映は、デプロイ手順を決める際に別途用意する)。
@@ -73,6 +73,17 @@ async function seed() {
     }
     await batch.commit();
     console.log(`  ${id}(${items.length}項目)`);
+  }
+  // JSONから消した(リネームした)テンプレートが公開のまま残らないよう、データに無いものは項目ごと取り除く。
+  const keep = new Set(templates.map((template) => template.id));
+  const stored = await db.collection('officialTemplates').get();
+  for (const doc of stored.docs.filter((d) => !keep.has(d.id))) {
+    const items = await doc.ref.collection('items').get();
+    const batch = db.batch();
+    items.docs.forEach((item) => batch.delete(item.ref));
+    batch.delete(doc.ref);
+    await batch.commit();
+    console.log(`  ${doc.id}(データに無いため削除)`);
   }
   console.log(`✓ ${templates.length}件を投入しました`);
 }

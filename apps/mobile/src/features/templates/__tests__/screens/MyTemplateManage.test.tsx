@@ -16,6 +16,7 @@ import {
 
 const mockRouter = { replace: jest.fn(), back: jest.fn() };
 const mockParams: { source: string; templateId: string } = { source: 'my', templateId: 't1' };
+let emitTemplate: (template: MyTemplate | null) => void;
 
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams, useRouter: () => mockRouter, Redirect: () => null }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'uuid-1' }));
@@ -48,6 +49,7 @@ describe('managing a my-template (MYTM-01)', () => {
     jest.mocked(useSession).mockReturnValue({ profile: { uid: 'uid-1', language: 'ja' } } as ReturnType<typeof useSession>);
     jest.mocked(useConnectivity).mockReturnValue({ isOffline: false, isRetrying: false, retry: jest.fn() });
     jest.mocked(subscribeToMyTemplate).mockImplementation((_uid, _id, onChange) => {
+      emitTemplate = onChange;
       onChange(mine);
       return jest.fn();
     });
@@ -114,6 +116,20 @@ describe('managing a my-template (MYTM-01)', () => {
     await act(async () => buttons.find((button) => button.text === '削除する')!.onPress?.());
 
     expect(deleteMyTemplate).toHaveBeenCalledWith('uid-1', 't1');
+    expect(mockRouter.back).toHaveBeenCalled();
+  });
+
+  it('does not flash the not-found screen while leaving after a delete', async () => {
+    const { getByRole, queryByText } = await render(<TemplateDetailScreen />);
+
+    await fireEvent.press(getByRole('button', { name: 'テンプレートを削除' }));
+    const buttons = jest.mocked(Alert.alert).mock.calls[0][2] as AlertButton[];
+    await act(async () => {
+      buttons.find((button) => button.text === '削除する')!.onPress?.();
+      emitTemplate(null); // 手元の削除は購読へ即座にnullとして返る
+    });
+
+    expect(queryByText('テンプレートが見つかりません')).toBeNull();
     expect(mockRouter.back).toHaveBeenCalled();
   });
 

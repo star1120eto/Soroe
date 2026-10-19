@@ -48,6 +48,9 @@ service cloud.firestore {
           request.resource.data.title is string &&
           request.resource.data.title.size() >= 1 &&
           request.resource.data.title.size() <= 60 &&
+          (request.resource.data.description == null ||
+            (request.resource.data.description is string &&
+              request.resource.data.description.size() <= 200)) &&
           request.resource.data.items.size() <= resource.data.items.size() &&
           request.resource.data.itemCount == request.resource.data.items.size();
       }

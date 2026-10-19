@@ -56,3 +56,19 @@ export function toMyTemplate(id: string, data: FirestoreData): MyTemplate {
     updatedAt: requireMillis(data.updatedAt, now),
   });
 }
+
+/**
+ * 1件の不正なドキュメントで一覧全体が失われないよう、変換に失敗したものは警告を出して飛ばす
+ * (onSnapshotのコールバック内で例外を投げると、残りの正常なテンプレートも表示されなくなる)。
+ */
+export function parseValid<TDoc extends { id: string }, TResult>(docs: TDoc[], convert: (doc: TDoc) => TResult): TResult[] {
+  const results: TResult[] = [];
+  for (const doc of docs) {
+    try {
+      results.push(convert(doc));
+    } catch (error) {
+      console.warn(`テンプレート(${doc.id})が不正なため表示しません`, error);
+    }
+  }
+  return results;
+}
