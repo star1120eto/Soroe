@@ -7,7 +7,9 @@ import {
   cancelGenerationTransaction,
   completeGenerationTransaction,
   getAiQuota,
+  rateAiResultTransaction,
   reserveGenerationTransaction,
+  saveAiResultTransaction,
 } from "../ai/aiStore";
 import { AI_ACTIVE_TTL_MS } from "../lists/constants";
 import { clearEmulator, connectEmulator } from "./emulator";
@@ -209,5 +211,88 @@ describe("getAiQuota", () => {
     await expect(getAiQuota(UID, "premium", NOW)).resolves.toEqual({
       plan: "premium", used: 3, limit: 20, remaining: 17, resetsAt: Date.UTC(2026, 9, 31, 15, 0, 0),
     });
+  });
+});
+
+// ---- AI-004: 保存と評価 ----
+
+describe("saveAiResultTransaction (AI-004)", () => {
+  const edited = {
+    title: "編集したタイトル",
+    listType: "packing" as const,
+    items: [
+      { name: "水", quantity: 2, unit: "L", category: "飲食", reason: "脱水を防ぐ", priority: "essential" as const },
+      { name: "地図", quantity: null, unit: null, category: null, reason: null, priority: "nice-to-have" as const },
+    ],
+  };
+  const save = (requestId: string, plan: "free" | "premium" = "free", uid = UID) =>
+    saveAiResultTransaction(uid, requestId, edited, plan, "たろう");
+  const listsOf = async () => (await db.collection("lists").get()).docs;
+
+  async function succeeded(requestId: string) {
+    await reserve(requestId, "premium");
+    await succeed(requestId);
+  }
+
+  it("creates a normal list from the edited items, with the reason as the note", async () => {
+    await succeeded("r1");
+
+    const saved = await save("r1");
+
+    expect(saved.status).toBe("saved");
+    const [list] = await listsOf();
+    expect(list.data()).toMatchObject({ name: "編集したタイトル", type: "packing", ownerId: UID });
+    const items = (await db.collection(`lists/${list.id}/items`).orderBy("sortOrder").get()).docs.map((d) => d.data());
+    expect(items.map((i) => [i.name, i.quantity, i.unit, i.category, i.note])).toEqual([
+      ["水", 2, "L", "飲食", "脱水を防ぐ"],
+      ["地図", null, null, null, null],
+    ]);
+    expect(items.every((i) => i.completedAt === null && i.createdBy === UID)).toBe(true);
+    expect((await db.doc(`users/${UID}/listRefs/${list.id}`).get()).data()).toMatchObject({ totalCount: 2, completedCount: 0, role: "owner" });
+    expect(await requestOf(UID, "r1")).toMatchObject({ status: "saved", listId: list.id });
+  });
+
+  it("returns the same list for a retried save, without creating a second one", async () => {
+    await succeeded("r1");
+    const first = await save("r1");
+    const again = await save("r1");
+
+    expect(again).toEqual({ status: "reused", listId: (first as { listId: string }).listId });
+    expect(await listsOf()).toHaveLength(1);
+  });
+
+  it("only saves the caller's own succeeded result", async () => {
+    await reserve("r1", "premium"); // 予約中のまま
+    await expect(save("r1")).resolves.toEqual({ status: "not-found" });
+    await expect(save("missing")).resolves.toEqual({ status: "not-found" });
+
+    await succeeded("r2");
+    await expect(save("r2", "free", "someone-else")).resolves.toEqual({ status: "not-found" });
+    expect(await listsOf()).toHaveLength(0);
+  });
+
+  it("refuses to save over the Free list limit and keeps the result for later", async () => {
+    await succeeded("r1");
+    for (const id of ["a", "b", "c"]) {
+      await db.doc(`users/${UID}/listRefs/${id}`).set({ name: id, archivedAt: null, deletedAt: null });
+    }
+
+    await expect(save("r1")).resolves.toEqual({ status: "limit-reached" });
+
+    expect(await listsOf()).toHaveLength(0);
+    expect(await requestOf(UID, "r1")).toMatchObject({ status: "succeeded", listId: null });
+    await expect(save("r1", "premium")).resolves.toMatchObject({ status: "saved" });
+  });
+});
+
+describe("rateAiResultTransaction", () => {
+  it("records the rating on the caller's finished request only", async () => {
+    await reserve("r1", "premium");
+    await expect(rateAiResultTransaction(UID, "r1", "helpful")).resolves.toBe("not-found"); // まだ結果がない
+    await succeed("r1");
+
+    await expect(rateAiResultTransaction(UID, "r1", "insufficient")).resolves.toBe("ok");
+    expect(await requestOf(UID, "r1")).toMatchObject({ rating: "insufficient" });
+    await expect(rateAiResultTransaction("someone-else", "r1", "helpful")).resolves.toBe("not-found");
   });
 });

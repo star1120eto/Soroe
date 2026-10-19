@@ -31,3 +31,8 @@ export { leaveList } from "./lists/leaveList";
 export { transferOwnership } from "./lists/transferOwnership";
 export { saveMyTemplate } from "./templates/saveMyTemplate";
 export { createListFromTemplate } from "./templates/createListFromTemplate";
+export { generateList } from "./ai/generateList";
+export { cancelGeneration } from "./ai/cancelGeneration";
+export { getAiQuotaCallable as getAiQuota } from "./ai/getAiQuota";
+export { saveAiResult } from "./ai/saveAiResult";
+export { rateAiResult } from "./ai/rateAiResult";

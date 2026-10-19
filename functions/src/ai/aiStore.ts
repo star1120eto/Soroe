@@ -1,8 +1,9 @@
 import { FieldValue, getFirestore, type DocumentReference, type Transaction } from "firebase-admin/firestore";
-import type { AiGenerationInput, AiQuota, AiRequestStatus, AiResult } from "@soroe/shared";
+import type { AiGenerationInput, AiQuota, AiRating, AiRequestStatus, AiResult, AiResultItem, ListType } from "@soroe/shared";
 
 import { AI_ACTIVE_TTL_MS, FREE_AI_LIFETIME_LIMIT, PREMIUM_AI_MONTHLY_LIMIT } from "../lists/constants";
-import type { Plan } from "../lists/listLimit";
+import { writeItemsInChunks, writeNewList, type NewItem } from "../lists/listCreation";
+import { isUnderActiveListLimit, type Plan } from "../lists/listLimit";
 import { jstMonthKey, nextJstMonthStartMs } from "./usagePeriod";
 
 // AI-001: 回数の予約→生成→確定/返却の状態機械。回数はクライアントの申告を信用せず、すべて
@@ -196,4 +197,88 @@ export async function cancelGenerationTransaction(
 export async function getAiQuota(uid: string, plan: Plan, nowMs: number): Promise<AiQuota> {
   const snap = await getFirestore().collection("aiUsage").doc(usageKeyFor(uid, plan, nowMs)).get();
   return quotaFrom(plan, snap.data()?.count ?? 0, nowMs);
+}
+
+export type SaveAiResult =
+  | { status: "saved" | "reused"; listId: string }
+  | { status: "limit-reached" }
+  | { status: "not-found" };
+
+const ICON_BY_LIST_TYPE: Record<ListType, string> = {
+  shopping: "shopping-cart-simple",
+  packing: "suitcase",
+  task: "check",
+};
+
+/**
+ * 編集後の結果を、通常のリストとして保存する(AI-004)。本人の成功済みの結果だけが対象で、
+ * 保存直前のリスト上限(Free 3件)を同じtransaction内で判定する。同じrequestIdの再送は最初のlistIdを返す。
+ * 項目の優先度は保存せず、理由をメモに入れる。
+ */
+export async function saveAiResultTransaction(
+  uid: string,
+  requestId: string,
+  edited: { title: string; listType: ListType; items: AiResultItem[] },
+  plan: Plan,
+  displayName: string | null
+): Promise<SaveAiResult> {
+  const { db, requestRef } = refs(uid, requestId);
+  const activeListRefsQuery = db.collection("users").doc(uid).collection("listRefs").where("archivedAt", "==", null);
+  const items: NewItem[] = edited.items.map((item) => ({
+    name: item.name,
+    quantity: item.quantity,
+    unit: item.unit,
+    category: item.category,
+    note: item.reason,
+    checked: false,
+  }));
+  let newListId: string | null = null;
+
+  const result = await db.runTransaction(async (tx) => {
+    const requestSnap = await tx.get(requestRef);
+    if (!requestSnap.exists) {
+      return { status: "not-found" as const };
+    }
+    const data = requestSnap.data()!;
+    if (data.status === "saved") {
+      return { status: "reused" as const, listId: data.listId as string };
+    }
+    if (data.status !== "succeeded") {
+      return { status: "not-found" as const };
+    }
+    const activeSnap = await tx.get(activeListRefsQuery);
+    if (!isUnderActiveListLimit(activeSnap.size, plan)) {
+      return { status: "limit-reached" as const };
+    }
+
+    const listRef = writeNewList(tx, db, uid, displayName, {
+      name: edited.title,
+      type: edited.listType,
+      color: "primary",
+      icon: ICON_BY_LIST_TYPE[edited.listType],
+      totalCount: items.length,
+      completedCount: 0,
+    });
+    tx.update(requestRef, { status: "saved", listId: listRef.id, updatedAt: FieldValue.serverTimestamp() });
+    newListId = listRef.id;
+    return { status: "saved" as const, listId: listRef.id };
+  });
+
+  if (result.status === "saved" && newListId) {
+    await writeItemsInChunks(db, newListId, uid, items);
+  }
+  return result;
+}
+
+/** 結果の評価(役に立った/足りなかった)。結果が出ている自分のリクエストだけ。 */
+export async function rateAiResultTransaction(uid: string, requestId: string, rating: AiRating): Promise<"ok" | "not-found"> {
+  const { db, requestRef } = refs(uid, requestId);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(requestRef);
+    if (!snap.exists || (snap.data()!.status !== "succeeded" && snap.data()!.status !== "saved")) {
+      return "not-found" as const;
+    }
+    tx.update(requestRef, { rating, updatedAt: FieldValue.serverTimestamp() });
+    return "ok" as const;
+  });
 }
