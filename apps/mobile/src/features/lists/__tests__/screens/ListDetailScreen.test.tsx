@@ -5,7 +5,7 @@ import type { List, ListItem, ListMember } from '@soroe/shared';
 import ListDetailScreen from '../../../../app/list/[listId]';
 import { useConnectivity } from '../../../connectivity/ConnectivityProvider';
 import { useSession } from '../../../session/SessionProvider';
-import { setListItemCompletion, subscribeToList, subscribeToListItems, subscribeToListMembers } from '../../ListRepository';
+import { archiveList, deleteList, duplicateList, setListItemCompletion, subscribeToList, subscribeToListItems, subscribeToListMembers } from '../../ListRepository';
 
 const mockRouter = { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() };
 
@@ -268,6 +268,36 @@ describe('ListDetailScreen', () => {
       await findByText('寝袋');
       expect(queryByText(/オフラインです/)).toBeNull();
       expect(queryByText(/同期中です/)).toBeNull();
+    });
+  });
+
+  describe('list menu while offline (OFF-001)', () => {
+    const OFFLINE_REASON = 'オフラインのため使えません。オンライン接続が必要です';
+
+    it.each(['複製する', 'アーカイブする', '削除する'])(
+      'explains instead of calling the server when "%s" is chosen offline',
+      async (label) => {
+        arrange({ offline: true });
+        const { findByRole } = await render(<ListDetailScreen />);
+        await fireEvent.press(await findByRole('button', { name: 'メニュー' }));
+
+        menuButtons().find((button) => button.text === label)!.onPress?.();
+
+        expect(Alert.alert).toHaveBeenLastCalledWith('オフラインです', OFFLINE_REASON);
+        expect(duplicateList).not.toHaveBeenCalled();
+        expect(archiveList).not.toHaveBeenCalled();
+        expect(deleteList).not.toHaveBeenCalled();
+      }
+    );
+
+    it('still opens the offline-capable actions', async () => {
+      arrange({ offline: true });
+      const { findByRole } = await render(<ListDetailScreen />);
+      await fireEvent.press(await findByRole('button', { name: 'メニュー' }));
+
+      menuButtons().find((button) => button.text === '共有・メンバー')!.onPress?.();
+
+      expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/list-share', params: { listId: 'list-1' } });
     });
   });
 });

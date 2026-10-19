@@ -6,6 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createListInputSchema, type List, type ListType } from '@soroe/shared';
 
 import { Banner, Button, Chip, Colors, Input, Spacing, Typography, type PhIconName } from '@/design-system';
+import { useConnectivity } from '@/features/connectivity/ConnectivityProvider';
+import { OFFLINE_REQUIRED_MESSAGE } from '@/features/connectivity/offlineMessages';
 import { describeListActionError } from '@/features/lists/listActionErrors';
 import { LIST_COLOR_OPTIONS, LIST_TYPE_OPTIONS } from '@/features/lists/listOptions';
 import { createList, subscribeToList, updateList } from '@/features/lists/ListRepository';
@@ -16,6 +18,9 @@ export default function NewListScreen() {
   const router = useRouter();
   const { listId } = useLocalSearchParams<{ listId?: string }>();
   const isEditing = Boolean(listId);
+  // 新規作成はサーバー検証(Free上限)を伴うためオンライン必須。既存リストの編集は端末への書込でオフラインでも可。
+  const { isOffline } = useConnectivity();
+  const createBlockedOffline = isOffline && !isEditing;
 
   const [requestId] = useState(() => randomUUID());
   const [name, setName] = useState('');
@@ -76,6 +81,7 @@ export default function NewListScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
+        {createBlockedOffline ? <Banner message={OFFLINE_REQUIRED_MESSAGE} variant="warning" /> : null}
         {requestError ? <Banner message={requestError} variant="danger" /> : null}
 
         <Input
@@ -131,6 +137,7 @@ export default function NewListScreen() {
           label={isEditing ? '保存する' : '作成する'}
           onPress={submit}
           loading={isSubmitting}
+          disabled={createBlockedOffline}
           variant="primary"
         />
       </View>

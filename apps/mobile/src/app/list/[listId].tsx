@@ -61,6 +61,7 @@ import { assigneeChipLabel } from '@/features/sharing/memberLabels';
 import { useDelayedFlag } from '@/hooks/useDelayedFlag';
 import { useConnectivity } from '@/features/connectivity/ConnectivityProvider';
 import { OfflineBanner } from '@/features/connectivity/OfflineBanner';
+import { OFFLINE_REQUIRED_MESSAGE } from '@/features/connectivity/offlineMessages';
 
 // itemsSnapshotがnullの間の`?? []`が毎レンダー新しい配列になり、それに依存する
 // useMemoが無駄に再計算されるのを避けるための安定した既定値。
@@ -272,6 +273,15 @@ export default function ListDetailScreen() {
     );
   };
 
+  // 複製・アーカイブ・削除はサーバー検証を伴うため、オフラインでは実行せず理由を伝える。
+  const requireOnline = (action: () => void) => () => {
+    if (isOffline) {
+      Alert.alert('オフラインです', OFFLINE_REQUIRED_MESSAGE);
+      return;
+    }
+    action();
+  };
+
   const openListMenu = () => {
     if (!list) {
       return;
@@ -279,14 +289,15 @@ export default function ListDetailScreen() {
     const buttons: AlertButton[] = [
       {
         text: '複製する',
-        onPress: () =>
+        onPress: requireOnline(() =>
           runOwnerAction(
             async () => {
               const result = await duplicateList(list.id, randomUUID());
               router.push(`/list/${result.listId}`);
             },
             () => {}
-          ),
+          )
+        ),
       },
       // メンバー一覧・招待・退出。オーナーと編集者で画面内の操作が変わる。
       { text: '共有・メンバー', onPress: () => router.push({ pathname: '/list-share', params: { listId: list.id } }) },
@@ -305,9 +316,9 @@ export default function ListDetailScreen() {
       // アーカイブ・削除はオーナーのみ(仕様2.3)。
       buttons.push({
         text: 'アーカイブする',
-        onPress: () => runOwnerAction(() => archiveList(list.id), () => router.back()),
+        onPress: requireOnline(() => runOwnerAction(() => archiveList(list.id), () => router.back())),
       });
-      buttons.push({ text: '削除する', style: 'destructive', onPress: confirmDelete });
+      buttons.push({ text: '削除する', style: 'destructive', onPress: requireOnline(confirmDelete) });
     }
     buttons.push({ text: 'キャンセル', style: 'cancel' });
     Alert.alert(list.name, undefined, buttons);
