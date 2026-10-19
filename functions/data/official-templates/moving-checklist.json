@@ -1,0 +1,240 @@
+{
+  "id": "moving-checklist",
+  "category": "home",
+  "priority": 20,
+  "published": true,
+  "listType": "task",
+  "icon": "house",
+  "adjustableByPeople": false,
+  "defaultPartySize": 3,
+  "hasSafetyNotice": false,
+  "itemCount": 12,
+  "ja": {
+    "title": "引っ越しのやること",
+    "description": "引っ越し前後の手続きと作業",
+    "notice": null
+  },
+  "en": {
+    "title": "Moving checklist",
+    "description": "Tasks before and after a move",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "notice-landlord",
+      "sortOrder": 1000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "現在の住まいの解約を連絡する",
+        "unit": null,
+        "category": "1か月前まで",
+        "note": null
+      },
+      "en": {
+        "name": "Give notice on your current home",
+        "unit": null,
+        "category": "A month before",
+        "note": null
+      }
+    },
+    {
+      "id": "movers",
+      "sortOrder": 2000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "引っ越し業者を決める",
+        "unit": null,
+        "category": "1か月前まで",
+        "note": null
+      },
+      "en": {
+        "name": "Book the movers",
+        "unit": null,
+        "category": "A month before",
+        "note": null
+      }
+    },
+    {
+      "id": "declutter",
+      "sortOrder": 3000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "不用品を処分する",
+        "unit": null,
+        "category": "1か月前まで",
+        "note": null
+      },
+      "en": {
+        "name": "Get rid of unwanted items",
+        "unit": null,
+        "category": "A month before",
+        "note": null
+      }
+    },
+    {
+      "id": "utilities-stop",
+      "sortOrder": 4000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "電気・ガス・水道の停止手続き",
+        "unit": null,
+        "category": "2週間前まで",
+        "note": null
+      },
+      "en": {
+        "name": "Stop utilities",
+        "unit": null,
+        "category": "Two weeks before",
+        "note": null
+      }
+    },
+    {
+      "id": "internet",
+      "sortOrder": 5000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "インターネットの移転手続き",
+        "unit": null,
+        "category": "2週間前まで",
+        "note": null
+      },
+      "en": {
+        "name": "Move your internet service",
+        "unit": null,
+        "category": "Two weeks before",
+        "note": null
+      }
+    },
+    {
+      "id": "post-forward",
+      "sortOrder": 6000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "郵便の転送届を出す",
+        "unit": null,
+        "category": "2週間前まで",
+        "note": null
+      },
+      "en": {
+        "name": "Set up mail forwarding",
+        "unit": null,
+        "category": "Two weeks before",
+        "note": null
+      }
+    },
+    {
+      "id": "school-notice",
+      "sortOrder": 7000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "園・学校への連絡と転校手続き",
+        "unit": null,
+        "category": "2週間前まで",
+        "note": null
+      },
+      "en": {
+        "name": "Notify school and arrange transfers",
+        "unit": null,
+        "category": "Two weeks before",
+        "note": null
+      }
+    },
+    {
+      "id": "pack",
+      "sortOrder": 8000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "荷造りをする",
+        "unit": null,
+        "category": "前日まで",
+        "note": null
+      },
+      "en": {
+        "name": "Pack your belongings",
+        "unit": null,
+        "category": "By the day before",
+        "note": null
+      }
+    },
+    {
+      "id": "utilities-start",
+      "sortOrder": 9000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "電気・ガス・水道の開始手続き",
+        "unit": null,
+        "category": "引っ越し後",
+        "note": null
+      },
+      "en": {
+        "name": "Start utilities",
+        "unit": null,
+        "category": "After moving",
+        "note": null
+      }
+    },
+    {
+      "id": "moving-in",
+      "sortOrder": 10000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "転入届・転出届を出す",
+        "unit": null,
+        "category": "引っ越し後",
+        "note": null
+      },
+      "en": {
+        "name": "Submit move-in and move-out forms",
+        "unit": null,
+        "category": "After moving",
+        "note": null
+      }
+    },
+    {
+      "id": "address-change",
+      "sortOrder": 11000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "免許証・銀行などの住所変更",
+        "unit": null,
+        "category": "引っ越し後",
+        "note": null
+      },
+      "en": {
+        "name": "Update your address on licenses and accounts",
+        "unit": null,
+        "category": "After moving",
+        "note": null
+      }
+    },
+    {
+      "id": "greetings",
+      "sortOrder": 12000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "近所へ挨拶する",
+        "unit": null,
+        "category": "引っ越し後",
+        "note": null
+      },
+      "en": {
+        "name": "Greet the neighbors",
+        "unit": null,
+        "category": "After moving",
+        "note": null
+      }
+    }
+  ]
+}

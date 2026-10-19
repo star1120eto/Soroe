@@ -1,0 +1,276 @@
+{
+  "id": "camping",
+  "category": "outdoor",
+  "priority": 20,
+  "published": true,
+  "listType": "packing",
+  "icon": "suitcase",
+  "adjustableByPeople": true,
+  "defaultPartySize": 4,
+  "hasSafetyNotice": false,
+  "itemCount": 14,
+  "ja": {
+    "title": "キャンプ",
+    "description": "家族で行くオートキャンプの持ち物",
+    "notice": null
+  },
+  "en": {
+    "title": "Camping",
+    "description": "Things for a family car-camping trip",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "tent",
+      "sortOrder": 1000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "テント",
+        "unit": "張",
+        "category": "設営",
+        "note": null
+      },
+      "en": {
+        "name": "Tent",
+        "unit": "pcs",
+        "category": "Shelter",
+        "note": null
+      }
+    },
+    {
+      "id": "tarp",
+      "sortOrder": 2000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "タープ",
+        "unit": "枚",
+        "category": "設営",
+        "note": null
+      },
+      "en": {
+        "name": "Tarp",
+        "unit": "pcs",
+        "category": "Shelter",
+        "note": null
+      }
+    },
+    {
+      "id": "sleeping-bag",
+      "sortOrder": 3000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "寝袋",
+        "unit": "個",
+        "category": "寝具",
+        "note": null
+      },
+      "en": {
+        "name": "Sleeping bag",
+        "unit": "pcs",
+        "category": "Sleeping",
+        "note": null
+      }
+    },
+    {
+      "id": "mat",
+      "sortOrder": 4000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "マット",
+        "unit": "枚",
+        "category": "寝具",
+        "note": null
+      },
+      "en": {
+        "name": "Sleeping mat",
+        "unit": "pcs",
+        "category": "Sleeping",
+        "note": null
+      }
+    },
+    {
+      "id": "chairs",
+      "sortOrder": 5000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "チェア",
+        "unit": "脚",
+        "category": "設営",
+        "note": null
+      },
+      "en": {
+        "name": "Chairs",
+        "unit": "pcs",
+        "category": "Shelter",
+        "note": null
+      }
+    },
+    {
+      "id": "table",
+      "sortOrder": 6000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "テーブル",
+        "unit": "台",
+        "category": "設営",
+        "note": null
+      },
+      "en": {
+        "name": "Table",
+        "unit": "pcs",
+        "category": "Shelter",
+        "note": null
+      }
+    },
+    {
+      "id": "stove",
+      "sortOrder": 7000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "コンロ・ガス缶",
+        "unit": null,
+        "category": "調理",
+        "note": null
+      },
+      "en": {
+        "name": "Stove and gas",
+        "unit": null,
+        "category": "Cooking",
+        "note": null
+      }
+    },
+    {
+      "id": "cookware",
+      "sortOrder": 8000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "調理器具・食器",
+        "unit": null,
+        "category": "調理",
+        "note": null
+      },
+      "en": {
+        "name": "Cookware and dishes",
+        "unit": null,
+        "category": "Cooking",
+        "note": null
+      }
+    },
+    {
+      "id": "cooler",
+      "sortOrder": 9000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "クーラーボックス",
+        "unit": "個",
+        "category": "調理",
+        "note": null
+      },
+      "en": {
+        "name": "Cooler box",
+        "unit": "pcs",
+        "category": "Cooking",
+        "note": null
+      }
+    },
+    {
+      "id": "lantern",
+      "sortOrder": 10000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "ランタン",
+        "unit": "個",
+        "category": "照明",
+        "note": null
+      },
+      "en": {
+        "name": "Lantern",
+        "unit": "pcs",
+        "category": "Lighting",
+        "note": null
+      }
+    },
+    {
+      "id": "headlamp",
+      "sortOrder": 11000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "ヘッドライト",
+        "unit": "個",
+        "category": "照明",
+        "note": null
+      },
+      "en": {
+        "name": "Headlamp",
+        "unit": "pcs",
+        "category": "Lighting",
+        "note": null
+      }
+    },
+    {
+      "id": "firewood",
+      "sortOrder": 12000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "薪・着火剤",
+        "unit": null,
+        "category": "調理",
+        "note": null
+      },
+      "en": {
+        "name": "Firewood and fire starter",
+        "unit": null,
+        "category": "Cooking",
+        "note": null
+      }
+    },
+    {
+      "id": "towel",
+      "sortOrder": 13000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "タオル",
+        "unit": "枚",
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Towel",
+        "unit": "pcs",
+        "category": "Other",
+        "note": null
+      }
+    },
+    {
+      "id": "bug-spray",
+      "sortOrder": 14000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "虫よけ",
+        "unit": null,
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Bug spray",
+        "unit": null,
+        "category": "Other",
+        "note": null
+      }
+    }
+  ]
+}

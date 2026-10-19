@@ -29,3 +29,5 @@ export { acceptInvite } from "./invites/acceptInvite";
 export { removeMember } from "./lists/removeMember";
 export { leaveList } from "./lists/leaveList";
 export { transferOwnership } from "./lists/transferOwnership";
+export { saveMyTemplate } from "./templates/saveMyTemplate";
+export { createListFromTemplate } from "./templates/createListFromTemplate";

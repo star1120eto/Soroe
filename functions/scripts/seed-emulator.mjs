@@ -8,10 +8,12 @@
 // - リストはアプリと同じCallable(createList / archiveList / createInvite)で作るため、
 //   members・listRefs・件数集計がアプリの経路どおりに整う。項目だけAdmin SDKで直接書く。
 // - ユーザーが未作成ならAuthに作り、プロフィールも用意する(メールOTPでログインすると、そのまま一覧へ進む)。
+// - 公式テンプレート(functions/data/official-templates)も一緒に投入する。
 // - 同名のリストが既にあれば作らない(繰り返し実行しても増えない)。Freeプランのアクティブリスト上限
 //   (3件)に達したら残りはスキップする。作り直すときはEmulatorを作り直す。
 // - Emulator以外には接続しない(接続先は 127.0.0.1 の既定ポート。環境変数で上書き可)。
 
+import { execFileSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 
 const PROJECT_ID = process.env.GCLOUD_PROJECT ?? 'soroe-1850a';
@@ -203,3 +205,6 @@ if (inviteUrls.length > 0) {
     console.log(`  ${url}`);
   }
 }
+
+// 公式テンプレート(10件)も入れる(Emulatorのテンプレートタブ用。冪等)。
+execFileSync('node', ['scripts/official-templates.mjs', 'seed'], { env: process.env, stdio: 'inherit' });

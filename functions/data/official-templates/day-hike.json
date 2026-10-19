@@ -1,0 +1,240 @@
+{
+  "id": "day-hike",
+  "category": "outdoor",
+  "priority": 10,
+  "published": true,
+  "listType": "packing",
+  "icon": "suitcase",
+  "adjustableByPeople": true,
+  "defaultPartySize": 2,
+  "hasSafetyNotice": true,
+  "itemCount": 12,
+  "ja": {
+    "title": "日帰り登山",
+    "description": "低山の日帰り登山の持ち物",
+    "notice": "状況や専門機関の最新情報を確認してください。このリストは安全を保証するものではありません。"
+  },
+  "en": {
+    "title": "Day hike",
+    "description": "Things to bring on a day hike up a low mountain",
+    "notice": "Check current conditions and official information. This list does not guarantee your safety."
+  },
+  "items": [
+    {
+      "id": "map",
+      "sortOrder": 1000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "地図・登山計画書",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Map and hiking plan",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "headlamp",
+      "sortOrder": 2000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "ヘッドライト",
+        "unit": "個",
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Headlamp",
+        "unit": "pcs",
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "first-aid",
+      "sortOrder": 3000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "救急セット",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "First aid kit",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "rain-gear",
+      "sortOrder": 4000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "レインウェア",
+        "unit": "着",
+        "category": "衣類",
+        "note": null
+      },
+      "en": {
+        "name": "Rain gear",
+        "unit": "set",
+        "category": "Clothing",
+        "note": null
+      }
+    },
+    {
+      "id": "warm-layer",
+      "sortOrder": 5000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "防寒着",
+        "unit": "着",
+        "category": "衣類",
+        "note": null
+      },
+      "en": {
+        "name": "Warm layer",
+        "unit": "pcs",
+        "category": "Clothing",
+        "note": null
+      }
+    },
+    {
+      "id": "hiking-shoes",
+      "sortOrder": 6000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "登山靴",
+        "unit": "足",
+        "category": "衣類",
+        "note": null
+      },
+      "en": {
+        "name": "Hiking shoes",
+        "unit": "pair",
+        "category": "Clothing",
+        "note": null
+      }
+    },
+    {
+      "id": "water",
+      "sortOrder": 7000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "水",
+        "unit": "L",
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Water",
+        "unit": "L",
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "lunch",
+      "sortOrder": 8000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "行動食・昼食",
+        "unit": "食",
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Trail snacks and lunch",
+        "unit": "serving",
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "emergency-food",
+      "sortOrder": 9000,
+      "quantity": 1,
+      "perPerson": true,
+      "ja": {
+        "name": "非常食",
+        "unit": "食",
+        "category": "飲食",
+        "note": null
+      },
+      "en": {
+        "name": "Emergency food",
+        "unit": "serving",
+        "category": "Food and drink",
+        "note": null
+      }
+    },
+    {
+      "id": "sunscreen",
+      "sortOrder": 10000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "日焼け止め",
+        "unit": null,
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Sunscreen",
+        "unit": null,
+        "category": "Other",
+        "note": null
+      }
+    },
+    {
+      "id": "trash-bag",
+      "sortOrder": 11000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ゴミ袋",
+        "unit": null,
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Trash bag",
+        "unit": null,
+        "category": "Other",
+        "note": null
+      }
+    },
+    {
+      "id": "power-bank",
+      "sortOrder": 12000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "モバイルバッテリー",
+        "unit": "個",
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Power bank",
+        "unit": "pcs",
+        "category": "Other",
+        "note": null
+      }
+    }
+  ]
+}

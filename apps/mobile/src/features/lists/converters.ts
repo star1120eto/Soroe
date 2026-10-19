@@ -16,7 +16,7 @@ import {
 // ネイティブ(RN Firebase)とWeb(firebase JS SDK)で共通に使うため、Firestoreの型には依存しない。
 type FirestoreData = Record<string, any>;
 
-function toMillis(value: unknown): number | null {
+export function toMillis(value: unknown): number | null {
   if (value === null || value === undefined) {
     return null;
   }
@@ -33,7 +33,7 @@ function toMillis(value: unknown): number | null {
   return null;
 }
 
-function requireMillis(value: unknown, fallback: number): number {
+export function requireMillis(value: unknown, fallback: number): number {
   return toMillis(value) ?? fallback;
 }
 

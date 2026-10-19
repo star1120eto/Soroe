@@ -1,0 +1,222 @@
+{
+  "id": "household-restock",
+  "category": "shopping",
+  "priority": 20,
+  "published": true,
+  "listType": "shopping",
+  "icon": "shopping-cart-simple",
+  "adjustableByPeople": false,
+  "defaultPartySize": 3,
+  "hasSafetyNotice": false,
+  "itemCount": 11,
+  "ja": {
+    "title": "日用品の補充",
+    "description": "切らしやすい日用品の買い足し用",
+    "notice": null
+  },
+  "en": {
+    "title": "Household restock",
+    "description": "Everyday items that run out quickly",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "tissue",
+      "sortOrder": 1000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "ティッシュペーパー",
+        "unit": "箱",
+        "category": "紙類",
+        "note": null
+      },
+      "en": {
+        "name": "Tissues",
+        "unit": "box",
+        "category": "Paper goods",
+        "note": null
+      }
+    },
+    {
+      "id": "toilet-paper",
+      "sortOrder": 2000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "トイレットペーパー",
+        "unit": "パック",
+        "category": "紙類",
+        "note": null
+      },
+      "en": {
+        "name": "Toilet paper",
+        "unit": "pack",
+        "category": "Paper goods",
+        "note": null
+      }
+    },
+    {
+      "id": "kitchen-paper",
+      "sortOrder": 3000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "キッチンペーパー",
+        "unit": "本",
+        "category": "紙類",
+        "note": null
+      },
+      "en": {
+        "name": "Paper towels",
+        "unit": "roll",
+        "category": "Paper goods",
+        "note": null
+      }
+    },
+    {
+      "id": "dish-soap",
+      "sortOrder": 4000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "食器用洗剤",
+        "unit": "本",
+        "category": "洗剤",
+        "note": null
+      },
+      "en": {
+        "name": "Dish soap",
+        "unit": "bottle",
+        "category": "Cleaning",
+        "note": null
+      }
+    },
+    {
+      "id": "laundry-detergent",
+      "sortOrder": 5000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "洗濯洗剤",
+        "unit": "本",
+        "category": "洗剤",
+        "note": null
+      },
+      "en": {
+        "name": "Laundry detergent",
+        "unit": "bottle",
+        "category": "Cleaning",
+        "note": null
+      }
+    },
+    {
+      "id": "softener",
+      "sortOrder": 6000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "柔軟剤",
+        "unit": "本",
+        "category": "洗剤",
+        "note": null
+      },
+      "en": {
+        "name": "Fabric softener",
+        "unit": "bottle",
+        "category": "Cleaning",
+        "note": null
+      }
+    },
+    {
+      "id": "shampoo",
+      "sortOrder": 7000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "シャンプー・リンス",
+        "unit": "本",
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Shampoo and conditioner",
+        "unit": "bottle",
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "body-soap",
+      "sortOrder": 8000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "ボディソープ",
+        "unit": "本",
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Body wash",
+        "unit": "bottle",
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "toothpaste",
+      "sortOrder": 9000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "歯みがき粉",
+        "unit": "本",
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Toothpaste",
+        "unit": "tube",
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "trash-bags",
+      "sortOrder": 10000,
+      "quantity": 1,
+      "perPerson": false,
+      "ja": {
+        "name": "ゴミ袋",
+        "unit": "袋",
+        "category": "雑貨",
+        "note": null
+      },
+      "en": {
+        "name": "Trash bags",
+        "unit": "pack",
+        "category": "Household",
+        "note": null
+      }
+    },
+    {
+      "id": "batteries",
+      "sortOrder": 11000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "電池",
+        "unit": null,
+        "category": "雑貨",
+        "note": null
+      },
+      "en": {
+        "name": "Batteries",
+        "unit": null,
+        "category": "Household",
+        "note": null
+      }
+    }
+  ]
+}

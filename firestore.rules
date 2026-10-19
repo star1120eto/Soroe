@@ -36,6 +36,24 @@ service cloud.firestore {
         allow read: if isSignedIn() && request.auth.uid == uid;
         allow write: if false;
       }
+
+      // MYTM-01/02: マイテンプレート。作成(保存)は上限判定を伴うためFunctions(Admin SDK)に限り、
+      // 本人は名前・説明の変更と項目を減らす更新(オフラインでも可)、削除だけをclientから行える。
+      match /myTemplates/{templateId} {
+        allow read, delete: if isSignedIn() && request.auth.uid == uid;
+        allow create: if false;
+        allow update: if isSignedIn() && request.auth.uid == uid &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['title', 'description', 'items', 'itemCount', 'updatedAt']) &&
+          request.resource.data.title is string &&
+          request.resource.data.title.size() >= 1 &&
+          request.resource.data.title.size() <= 60 &&
+          (request.resource.data.description == null ||
+            (request.resource.data.description is string &&
+              request.resource.data.description.size() <= 200)) &&
+          request.resource.data.items.size() <= resource.data.items.size() &&
+          request.resource.data.itemCount == request.resource.data.items.size();
+      }
     }
 
     // LIST-001: リスト本体。閲覧はメンバーのみ。
@@ -93,6 +111,19 @@ service cloud.firestore {
     match /invites/{inviteId} {
       allow read: if isOwner(resource.data.listId);
       allow write: if false;
+    }
+
+    // TMPL-001: 公式テンプレート。公開済みのものだけ、サインイン済みなら読める。
+    // 書込はclientから全拒否(内容はリポジトリのJSONからseedコマンド/Admin SDKで反映する)。
+    match /officialTemplates/{templateId} {
+      allow read: if isSignedIn() && resource.data.published == true;
+      allow write: if false;
+
+      match /items/{itemId} {
+        allow read: if isSignedIn() &&
+          get(/databases/$(database)/documents/officialTemplates/$(templateId)).data.published == true;
+        allow write: if false;
+      }
     }
   }
 }

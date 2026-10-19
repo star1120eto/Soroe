@@ -1,0 +1,222 @@
+{
+  "id": "hometown-visit",
+  "category": "family-trip",
+  "priority": 20,
+  "published": true,
+  "listType": "packing",
+  "icon": "suitcase",
+  "adjustableByPeople": false,
+  "defaultPartySize": 3,
+  "hasSafetyNotice": false,
+  "itemCount": 11,
+  "ja": {
+    "title": "帰省の持ち物",
+    "description": "実家へ帰省するときの持ち物と手土産",
+    "notice": null
+  },
+  "en": {
+    "title": "Visiting family",
+    "description": "Things to bring when visiting relatives",
+    "notice": null
+  },
+  "items": [
+    {
+      "id": "transport",
+      "sortOrder": 1000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "乗車券・予約確認",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Transport tickets",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "wallet",
+      "sortOrder": 2000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "財布・現金",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Wallet and cash",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "phone-charger",
+      "sortOrder": 3000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "スマホ・充電器",
+        "unit": null,
+        "category": "必需品",
+        "note": null
+      },
+      "en": {
+        "name": "Phone and charger",
+        "unit": null,
+        "category": "Essentials",
+        "note": null
+      }
+    },
+    {
+      "id": "souvenir",
+      "sortOrder": 4000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "手土産",
+        "unit": null,
+        "category": "手土産",
+        "note": null
+      },
+      "en": {
+        "name": "Gift for the family",
+        "unit": null,
+        "category": "Gifts",
+        "note": null
+      }
+    },
+    {
+      "id": "money-gift",
+      "sortOrder": 5000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "お年玉・祝儀",
+        "unit": null,
+        "category": "手土産",
+        "note": null
+      },
+      "en": {
+        "name": "Cash gifts",
+        "unit": null,
+        "category": "Gifts",
+        "note": null
+      }
+    },
+    {
+      "id": "clothes",
+      "sortOrder": 6000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "着替え",
+        "unit": null,
+        "category": "衣類",
+        "note": null
+      },
+      "en": {
+        "name": "Change of clothes",
+        "unit": null,
+        "category": "Clothing",
+        "note": null
+      }
+    },
+    {
+      "id": "medicine",
+      "sortOrder": 7000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "常備薬",
+        "unit": null,
+        "category": "衛生用品",
+        "note": null
+      },
+      "en": {
+        "name": "Regular medicine",
+        "unit": null,
+        "category": "Toiletries",
+        "note": null
+      }
+    },
+    {
+      "id": "kids-snacks",
+      "sortOrder": 8000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "子どものおやつ・おもちゃ",
+        "unit": null,
+        "category": "子ども用品",
+        "note": null
+      },
+      "en": {
+        "name": "Kids' snacks and toys",
+        "unit": null,
+        "category": "For kids",
+        "note": null
+      }
+    },
+    {
+      "id": "photos",
+      "sortOrder": 9000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "家族に見せる写真・アルバム",
+        "unit": null,
+        "category": "その他",
+        "note": null
+      },
+      "en": {
+        "name": "Photos to show the family",
+        "unit": null,
+        "category": "Other",
+        "note": null
+      }
+    },
+    {
+      "id": "lock-up",
+      "sortOrder": 10000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "戸締まり・火の元の確認",
+        "unit": null,
+        "category": "出発前",
+        "note": null
+      },
+      "en": {
+        "name": "Lock doors and check the stove",
+        "unit": null,
+        "category": "Before leaving",
+        "note": null
+      }
+    },
+    {
+      "id": "trash-out",
+      "sortOrder": 11000,
+      "quantity": null,
+      "perPerson": false,
+      "ja": {
+        "name": "ゴミ出し・冷蔵庫の整理",
+        "unit": null,
+        "category": "出発前",
+        "note": null
+      },
+      "en": {
+        "name": "Take out trash, tidy the fridge",
+        "unit": null,
+        "category": "Before leaving",
+        "note": null
+      }
+    }
+  ]
+}

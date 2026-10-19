@@ -9,3 +9,6 @@ export const DELETED_LIST_RETENTION_DAYS = 30;
 // 持って400件ずつに分ける(duplicateListTransactionの項目複製、
 // purgeExpiredDeletedListsの物理削除で共通して使う)。
 export const FIRESTORE_BATCH_CHUNK_SIZE = 400;
+
+// docs/family-checklist-product-design.md 4.1 / 6.8: Freeのマイテンプレートは1件。
+export const FREE_MY_TEMPLATE_LIMIT = 1;

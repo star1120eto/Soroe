@@ -52,6 +52,8 @@ pnpm run seed -- a@example.test                 # 所有者のメール
 pnpm run seed -- a@example.test --name たろう   # 表示名を指定(ユーザー新規作成時)
 ```
 
+- 公式テンプレート10件(日英)も投入する(「テンプレート」タブで見られる)。公式テンプレートだけ入れ直すときは
+  `pnpm run templates:seed`(内容は `functions/data/official-templates/*.json`、検証は `pnpm run templates:validate`)。
 - 買い物・持ち物・やることの3種類のリスト(完了済みの項目あり)と、アーカイブ済みのリストを1つ作る。
   「週末のキャンプ」には招待リンク2本(未使用)も付き、リンクは実行結果の末尾に出る。
 - リストはアプリと同じCallableで作るため、メンバー・一覧・「◯/◯完了」の件数が実際の経路どおりに整う。
