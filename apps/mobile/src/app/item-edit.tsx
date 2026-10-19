@@ -2,12 +2,20 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { List, ListItem, ListMember } from '@soroe/shared';
+import type { CreateListItemInput, List, ListItem, ListMember, UpdateListItemInput } from '@soroe/shared';
 
 import { Banner, Button, Checkbox, Chip, Colors, Input, Skeleton, Spacing, Typography } from '@/design-system';
 import { formatDueDateInput } from '@/features/lists/dueDate';
 import { validateItemEditForm, type ItemEditFormState } from '@/features/lists/itemEditForm';
 import {
+  formatConflictMessage,
+  resolveSave,
+  toEditableValues,
+  type EditableField,
+  type EditableValues,
+} from '@/features/lists/itemConflict';
+import {
+  addListItem,
   setListItemCompletion,
   softDeleteListItem,
   subscribeToList,
@@ -51,15 +59,16 @@ export default function ItemEditScreen() {
   const [members, setMembers] = useState<ListMember[]>([]);
   const [form, setForm] = useState<ItemEditFormState>(EMPTY_FORM);
   const [completed, setCompleted] = useState(false);
-  // 完了チェックボックスをこの編集セッションで実際に操作したかどうか。
-  // 素通りの値(item.completedAtから初期化しただけ)と区別しないと、他端末が
-  // 完了状態を変えた後に「自分の変更で上書き」した際、触ってもいない完了
-  // 状態を古い値で巻き戻してしまう。
-  const [completedTouched, setCompletedTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 編集中に他の端末で削除された(削除を優先する。SYNC-01)。
+  const [deleted, setDeleted] = useState(false);
 
   const initializedRef = useRef(false);
-  const baseUpdatedAtRef = useRef<number | null>(null);
+  // 自分の削除操作では「削除されました」画面を出さない(購読は手元の書込でも即座にnullを返す)。
+  const deletingRef = useRef(false);
+  // 編集を開いた時点の項目(競合判定の基準)と、最後に見えていた項目(削除後の新規追加の並び順に使う)。
+  const baseRef = useRef<EditableValues | null>(null);
+  const lastItemRef = useRef<ListItem | null>(null);
 
   useEffect(() => {
     if (!listId) {
@@ -76,10 +85,19 @@ export default function ItemEditScreen() {
       listId,
       itemId,
       (next) => {
+        if (next === null && initializedRef.current) {
+          if (!deletingRef.current) {
+            setDeleted(true);
+          }
+          return;
+        }
         setItem(next);
+        if (next) {
+          lastItemRef.current = next;
+        }
         if (next && !initializedRef.current) {
           initializedRef.current = true;
-          baseUpdatedAtRef.current = next.updatedAt;
+          baseRef.current = toEditableValues(next);
           setForm(formFromItem(next));
           setCompleted(next.completedAt !== null);
         }
@@ -112,47 +130,108 @@ export default function ItemEditScreen() {
   }
   const uid = profile.uid;
 
-  const applySave = () => {
-    if (!item || isReadOnly) {
-      return;
-    }
+  // フォームの入力を検証し、競合判定用の値(EditableValues)と保存用の入力にそろえる。
+  const readForm = (): { values: EditableValues; input: UpdateListItemInput } | null => {
     const result = validateItemEditForm(form, showQuantityUnit, showDueDate);
     if (!result.ok) {
       setError(result.error);
-      return;
+      return null;
     }
+    const { input } = result;
+    return {
+      input,
+      values: {
+        name: input.name ?? '',
+        quantity: input.quantity ?? null,
+        unit: input.unit ?? null,
+        category: input.category ?? null,
+        note: input.note ?? null,
+        assigneeId: input.assigneeId ?? null,
+        dueAt: input.dueAt ?? null,
+        completed,
+      },
+    };
+  };
 
-    // updateListItem/setListItemCompletionはローカルキャッシュへの即時書込
-    // (LIST-001)で本当に待つ非同期処理が無いため、ローディング状態は持たない。
-    updateListItem(listId, itemId, result.input);
-    if (completedTouched) {
-      setListItemCompletion(listId, itemId, uid, completed);
+  // 自分が変えた項目だけを書く。他のメンバーが別の項目を変えていても消さない(SYNC-01)。
+  const applySave = (input: UpdateListItemInput, fields: EditableField[], nextBase: EditableValues) => {
+    const patch: Record<string, unknown> = {};
+    for (const field of fields) {
+      if (field !== 'completed') {
+        patch[field] = input[field];
+      }
     }
-    baseUpdatedAtRef.current = item.updatedAt;
+    if (Object.keys(patch).length > 0) {
+      updateListItem(listId, itemId, patch as UpdateListItemInput);
+    }
+    if (fields.includes('completed')) {
+      setListItemCompletion(listId, itemId, uid, nextBase.completed);
+    }
     router.back();
   };
 
   const handleSave = () => {
     setError(null);
-    if (!item || isReadOnly) {
+    if (!item || isReadOnly || !baseRef.current) {
       return;
     }
-    if (baseUpdatedAtRef.current !== null && item.updatedAt !== baseUpdatedAtRef.current) {
-      Alert.alert('他のメンバーが更新しました', 'この項目は編集中に別の変更が保存されました。', [
-        {
-          text: '相手の変更を使う',
-          onPress: () => {
-            baseUpdatedAtRef.current = item.updatedAt;
-            setForm(formFromItem(item));
-            setCompleted(item.completedAt !== null);
-            setCompletedTouched(false);
-          },
+    const read = readForm();
+    if (!read) {
+      return;
+    }
+    const resolution = resolveSave({ base: baseRef.current, mine: read.values, latest: item });
+    if (resolution.action === 'noop') {
+      router.back();
+      return;
+    }
+    if (resolution.action === 'deleted') {
+      setDeleted(true);
+      return;
+    }
+    if (resolution.action === 'save') {
+      applySave(read.input, resolution.fields, read.values);
+      return;
+    }
+    // 同じ項目が食い違うときだけ、比較して選ばせる。
+    const latest = toEditableValues(item);
+    Alert.alert('他のメンバーが更新しました', formatConflictMessage(resolution.overlapping, read.values, latest), [
+      {
+        text: '相手の変更を使う',
+        onPress: () => {
+          // 自分が変えていない項目と、食い違った項目は相手の値にそろえる(自分だけが変えた項目は残す)。
+          const keep = resolution.fields.filter((field) => !resolution.overlapping.includes(field));
+          const latestForm = formFromItem(item);
+          setForm((current) => {
+            const next = { ...latestForm };
+            for (const field of keep) {
+              if (field !== 'completed') {
+                (next as Record<string, unknown>)[field] = current[field];
+              }
+            }
+            return next;
+          });
+          if (!keep.includes('completed')) {
+            setCompleted(latest.completed);
+          }
+          baseRef.current = latest;
         },
-        { text: '自分の変更で上書き', style: 'destructive', onPress: applySave },
-      ]);
+      },
+      {
+        text: '自分の変更で上書き',
+        style: 'destructive',
+        onPress: () => applySave(read.input, resolution.fields, read.values),
+      },
+    ]);
+  };
+
+  // 削除された項目の入力内容を、新しい項目として追加し直す(削除を優先したうえで、入力を失わせない)。
+  const handleAddAsNew = () => {
+    const read = readForm();
+    if (!read || !lastItemRef.current) {
       return;
     }
-    applySave();
+    addListItem(listId, uid, { ...read.input, name: read.values.name } as CreateListItemInput, lastItemRef.current.sortOrder + 1);
+    router.back();
   };
 
   const handleDelete = () => {
@@ -165,12 +244,26 @@ export default function ItemEditScreen() {
         text: '削除する',
         style: 'destructive',
         onPress: () => {
+          deletingRef.current = true;
           softDeleteListItem(listId, itemId);
           router.back();
         },
       },
     ]);
   };
+
+  if (deleted) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Banner message="この項目は削除されました" variant="warning" />
+          {error ? <Banner message={error} variant="danger" /> : null}
+          <Button label="入力内容を新しい項目として追加" onPress={handleAddAsNew} variant="primary" />
+          <Button label="閉じる" onPress={() => router.back()} variant="secondary" />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   if (list === null || item === null) {
     return (
@@ -275,10 +368,7 @@ export default function ItemEditScreen() {
         <View style={styles.completedRow}>
           <Checkbox
             checked={completed}
-            onChange={(next) => {
-              setCompleted(next);
-              setCompletedTouched(true);
-            }}
+            onChange={setCompleted}
           />
           <Text style={[Typography.body, styles.completedLabel]}>完了にする</Text>
         </View>
