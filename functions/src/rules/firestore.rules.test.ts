@@ -423,3 +423,101 @@ it("rulesファイルを読み込めている", () => {
   const rules = readFileSync(path.resolve(__dirname, "../../../firestore.rules"), "utf8");
   expect(rules).toContain("match /lists/{listId}");
 });
+
+// TMPL-001 / MYTM: 公式テンプレートの読取と、マイテンプレートの更新の制限。
+describe("templates", () => {
+  const MYSELF = "template-owner";
+  const OTHER = "other-user";
+
+  const myTemplate = (overrides: Record<string, unknown> = {}) => ({
+    title: "週末のキャンプ",
+    description: null,
+    listType: "packing",
+    icon: "suitcase",
+    color: "primary",
+    itemCount: 2,
+    items: [
+      { id: "a", name: "テント", quantity: null, unit: null, category: null, note: null, checked: false },
+      { id: "b", name: "寝袋", quantity: null, unit: null, category: null, note: null, checked: false },
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  });
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await db.doc("officialTemplates/day-hike").set({ published: true, category: "outdoor" });
+      await db.doc("officialTemplates/day-hike/items/water").set({ sortOrder: 1000 });
+      await db.doc("officialTemplates/draft").set({ published: false, category: "outdoor" });
+      await db.doc("officialTemplates/draft/items/water").set({ sortOrder: 1000 });
+      await db.doc(`users/${MYSELF}/myTemplates/t1`).set(myTemplate());
+    });
+  });
+
+  it("does not let a signed-out visitor read official templates", async () => {
+    await assertFails(testEnv.unauthenticatedContext().firestore().doc("officialTemplates/day-hike").get());
+  });
+
+  it("lets a signed-in user read a published official template and its items", async () => {
+    const db = testEnv.authenticatedContext(OTHER).firestore();
+    await assertSucceeds(db.doc("officialTemplates/day-hike").get());
+    await assertSucceeds(db.doc("officialTemplates/day-hike/items/water").get());
+  });
+
+  it("hides an unpublished official template and its items", async () => {
+    const db = testEnv.authenticatedContext(OTHER).firestore();
+    await assertFails(db.doc("officialTemplates/draft").get());
+    await assertFails(db.doc("officialTemplates/draft/items/water").get());
+  });
+
+  it("never lets a client write an official template", async () => {
+    const db = testEnv.authenticatedContext(OTHER).firestore();
+    await assertFails(db.doc("officialTemplates/new").set({ published: true }));
+    await assertFails(db.doc("officialTemplates/day-hike").update({ published: false }));
+    await assertFails(db.doc("officialTemplates/day-hike/items/extra").set({ sortOrder: 1 }));
+  });
+
+  it("lets the owner read their own my-template but not someone else's", async () => {
+    await assertSucceeds(testEnv.authenticatedContext(MYSELF).firestore().doc(`users/${MYSELF}/myTemplates/t1`).get());
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`users/${MYSELF}/myTemplates/t1`).get());
+  });
+
+  it("does not let a client create a my-template (Functions only)", async () => {
+    const db = testEnv.authenticatedContext(MYSELF).firestore();
+    await assertFails(db.doc(`users/${MYSELF}/myTemplates/t2`).set(myTemplate()));
+  });
+
+  it("lets the owner rename a my-template and remove items", async () => {
+    const db = testEnv.authenticatedContext(MYSELF).firestore();
+    const ref = db.doc(`users/${MYSELF}/myTemplates/t1`);
+    await assertSucceeds(ref.update({ title: "キャンプ(夏)", description: "夏用", updatedAt: new Date() }));
+    await assertSucceeds(
+      ref.update({
+        items: [{ id: "a", name: "テント", quantity: null, unit: null, category: null, note: null, checked: false }],
+        itemCount: 1,
+        updatedAt: new Date(),
+      })
+    );
+  });
+
+  it("rejects adding items, an inconsistent itemCount, other fields, an empty or long title, and other people's edits", async () => {
+    const mine = testEnv.authenticatedContext(MYSELF).firestore().doc(`users/${MYSELF}/myTemplates/t1`);
+    const extra = { id: "c", name: "ランタン", quantity: null, unit: null, category: null, note: null, checked: false };
+    const current = myTemplate().items;
+    await assertFails(mine.update({ items: [...current, extra], itemCount: 3, updatedAt: new Date() }));
+    await assertFails(mine.update({ items: [current[0]], itemCount: 2, updatedAt: new Date() }));
+    await assertFails(mine.update({ listType: "task", updatedAt: new Date() }));
+    await assertFails(mine.update({ title: "", updatedAt: new Date() }));
+    await assertFails(mine.update({ title: "あ".repeat(61), updatedAt: new Date() }));
+    await assertFails(
+      testEnv.authenticatedContext(OTHER).firestore().doc(`users/${MYSELF}/myTemplates/t1`).update({ title: "乗っ取り" })
+    );
+  });
+
+  it("lets only the owner delete a my-template", async () => {
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`users/${MYSELF}/myTemplates/t1`).delete());
+    await assertSucceeds(testEnv.authenticatedContext(MYSELF).firestore().doc(`users/${MYSELF}/myTemplates/t1`).delete());
+  });
+});
