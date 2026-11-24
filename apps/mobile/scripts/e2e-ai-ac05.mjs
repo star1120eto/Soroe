@@ -122,11 +122,21 @@ const requestDoc = async (client, uid, requestId) => (await getDoc(doc(client.db
 // Emulatorのrules-bypass(Bearer owner)で、Premiumの権利を直接入れる(アプリからは書けない)。
 async function grantPremium(uid) {
   const response = await fetch(
-    `http://${firestoreHost}/v1/projects/${PROJECT_ID}/databases/(default)/documents/entitlements/${uid}?updateMask.fieldPaths=plan`,
+    `http://${firestoreHost}/v1/projects/${PROJECT_ID}/databases/(default)/documents/entitlements/${uid}`,
     {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
-      body: JSON.stringify({ fields: { plan: { stringValue: 'premium' } } }),
+      body: JSON.stringify({
+        fields: {
+          status: { stringValue: 'premium' },
+          productId: { stringValue: 'soroe_premium_monthly' },
+          expiresAtMs: { nullValue: null },
+          graceEndsAtMs: { nullValue: null },
+          willRenew: { booleanValue: true },
+          environment: { stringValue: 'SANDBOX' },
+          lastEventAtMs: { integerValue: '1' },
+        },
+      }),
     }
   );
   assert(response.ok, `Premiumの付与に失敗(${response.status})`);

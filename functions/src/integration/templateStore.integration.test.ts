@@ -51,7 +51,10 @@ async function seedList({ deleted = false, member = true }: { deleted?: boolean;
 }
 
 async function seedPremium() {
-  await db.doc(`entitlements/${UID}`).set({ plan: "premium" });
+  await db.doc(`entitlements/${UID}`).set({
+    status: "premium", productId: "soroe_premium_monthly", expiresAtMs: null, graceEndsAtMs: null,
+    willRenew: true, environment: "SANDBOX", lastEventAtMs: 1,
+  });
 }
 
 const myTemplates = async () => (await db.collection(`users/${UID}/myTemplates`).get()).docs;

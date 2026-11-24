@@ -8,6 +8,8 @@ jest.mock('../AuthGateway', () => ({
   subscribeToAuthState: jest.fn(),
   signOut: jest.fn(),
 }));
+jest.mock('../../billing/purchasesGateway', () => ({ purchasesGateway: {} }));
+jest.mock('../../billing/EntitlementGateway', () => ({ syncPurchasesUser: jest.fn() }));
 jest.mock('../SessionRepository', () => ({
   getUserProfile: jest.fn(),
   createUserProfile: jest.fn(),

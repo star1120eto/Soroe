@@ -36,3 +36,4 @@ export { cancelGeneration } from "./ai/cancelGeneration";
 export { getAiQuotaCallable as getAiQuota } from "./ai/getAiQuota";
 export { saveAiResult } from "./ai/saveAiResult";
 export { rateAiResult } from "./ai/rateAiResult";
+export { revenueCatWebhook } from "./billing/revenueCatWebhook";
