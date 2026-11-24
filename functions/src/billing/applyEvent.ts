@@ -45,9 +45,14 @@ export function applyRevenueCatEvent(prev: EntitlementDocument | null, event: Re
     return { kind: "update", doc: { ...base, status: "premium", graceEndsAtMs: null, willRenew: true } };
   }
   switch (event.type) {
-    case "CANCELLATION":
+    case "CANCELLATION": {
+      // 返金などで期間が既に終わっている場合は、猶予を与えず即失効にする。
+      if (base.expiresAtMs !== null && base.expiresAtMs <= event.event_timestamp_ms) {
+        return { kind: "update", doc: { ...base, status: "expired", graceEndsAtMs: null, willRenew: false } };
+      }
       // 解約しても期間末までは有効。自動更新だけ止まる。
       return { kind: "update", doc: { ...base, status: "premium", graceEndsAtMs: null, willRenew: false } };
+    }
     case "BILLING_ISSUE":
       return {
         kind: "update",

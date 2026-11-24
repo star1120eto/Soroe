@@ -39,6 +39,12 @@ describe("applyRevenueCatEvent", () => {
     });
   });
 
+  it("CANCELLATION whose period already ended (e.g. refund) expires immediately without grace", () => {
+    expect(doc(applyRevenueCatEvent(prev(), ev({ type: "CANCELLATION", expiration_at_ms: 150, event_timestamp_ms: 200 })))).toMatchObject({
+      status: "expired", willRenew: false, expiresAtMs: 150,
+    });
+  });
+
   it("BILLING_ISSUE starts a grace period (provided end, else default length)", () => {
     expect(doc(applyRevenueCatEvent(prev(), ev({ type: "BILLING_ISSUE", grace_period_expiration_at_ms: 9000 })))).toMatchObject({
       status: "billing-issue", graceEndsAtMs: 9000,

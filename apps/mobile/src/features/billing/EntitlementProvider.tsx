@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { EntitlementGateway } from './EntitlementGateway';
 import { FREE_SNAPSHOT, type EntitlementSnapshot } from './entitlementModel';
 import { purchasesGateway } from './purchasesGateway';
+import { useSession } from '../session/SessionProvider';
 
 // PAY-002/003: 権利の表示状態を保持する。UI表示専用で、機能の可否は常にサーバー(getPlan)が決める。
 type EntitlementContextValue = {
@@ -23,7 +24,11 @@ export function EntitlementProvider({
   children: ReactNode;
   gateway?: EntitlementGateway;
 }) {
-  const [snapshot, setSnapshot] = useState<EntitlementSnapshot>(FREE_SNAPSHOT);
+  const { status } = useSession();
+  const [stored, setSnapshot] = useState<EntitlementSnapshot>(FREE_SNAPSHOT);
+  // ログアウト中は前のユーザーのPremium表示を残さない。
+  const snapshot = status === 'unauthenticated' ? FREE_SNAPSHOT : stored;
+  const signedIn = status === 'authenticated';
 
   useEffect(() => {
     let unsubscribe = () => {};
@@ -32,16 +37,17 @@ export function EntitlementProvider({
     gateway
       .configure()
       .then((ready) => {
-        if (ready && !cancelled) {
-          unsubscribe = gateway.subscribe(setSnapshot);
-        }
+        if (!ready || cancelled) return;
+        unsubscribe = gateway.subscribe(setSnapshot);
+        // ログイン後はSDKから読み直す(以降の変化は購読で届く)。
+        return signedIn ? gateway.getSnapshot().then((next) => !cancelled && setSnapshot(next)) : undefined;
       })
       .catch((error) => console.error('EntitlementProvider configure failed', error));
     return () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [gateway]);
+  }, [gateway, signedIn]);
 
   const refresh = useCallback(async () => {
     try {
