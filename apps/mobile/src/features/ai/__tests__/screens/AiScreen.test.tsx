@@ -41,6 +41,15 @@ describe('AiScreen', () => {
     expect(mockRouter.push).toHaveBeenCalledWith('/ai-flow');
   });
 
+  it('offers Premium from the AI limit screen, with the trigger', async () => {
+    arrange({ quota: free(1) });
+    const { findByText, getByRole } = await render(<AiScreen />);
+    await findByText('無料の生成(1回)は使用済みです');
+
+    await fireEvent.press(getByRole('button', { name: 'Premiumを見る' }));
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/paywall', params: { trigger: 'ai-limit' } });
+  });
+
   it('explains that the free generation is used up, and disables starting', async () => {
     arrange({ quota: free(1) });
     const { findByText, getByRole } = await render(<AiScreen />);

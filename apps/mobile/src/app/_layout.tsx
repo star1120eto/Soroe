@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { useAppFonts } from '@/design-system';
+import { EntitlementProvider } from '@/features/billing/EntitlementProvider';
 import { ConnectivityProvider } from '@/features/connectivity/ConnectivityProvider';
 import { SessionProvider, useSession } from '@/features/session/SessionProvider';
 import { connectEmulators } from '@/lib/firebase/connectEmulators';
@@ -54,6 +55,7 @@ function RootNavigator() {
       <Stack.Screen name="ai-flow" options={{ headerShown: true, title: 'AIでリストを作る' }} />
       <Stack.Screen name="save-template" options={{ headerShown: true, title: 'マイテンプレートに保存' }} />
       <Stack.Screen name="template-detail" options={{ headerShown: true, title: 'テンプレート' }} />
+      <Stack.Screen name="paywall" options={{ presentation: 'modal', headerShown: true, title: 'Premium' }} />
       <Stack.Screen name="list-share" options={{ headerShown: true, title: '共有・メンバー' }} />
     </Stack>
   );
@@ -63,7 +65,9 @@ export default function RootLayout() {
   return (
     <SessionProvider>
       <ConnectivityProvider>
-        <RootNavigator />
+        <EntitlementProvider>
+          <RootNavigator />
+        </EntitlementProvider>
       </ConnectivityProvider>
     </SessionProvider>
   );

@@ -576,4 +576,18 @@ describe("ai generation", () => {
     await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`users/${ME}/generationProfiles/default`).get());
     await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`users/${ME}/generationProfiles/default`).set({ x: 1 }));
   });
+
+  it("lets a user read only their own entitlement and never write it or the webhook markers", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc(`entitlements/${ME}`).set({ status: "premium" });
+      await ctx.firestore().doc("webhookEvents/revenuecat_e1").set({ type: "RENEWAL" });
+    });
+    const mine = testEnv.authenticatedContext(ME).firestore();
+    await assertSucceeds(mine.doc(`entitlements/${ME}`).get());
+    await assertFails(testEnv.authenticatedContext(OTHER).firestore().doc(`entitlements/${ME}`).get());
+    await assertFails(mine.doc(`entitlements/${ME}`).set({ status: "premium" }));
+    await assertFails(mine.doc(`entitlements/${ME}`).delete());
+    await assertFails(mine.doc("webhookEvents/revenuecat_e1").get());
+    await assertFails(mine.doc("webhookEvents/revenuecat_e2").set({ type: "RENEWAL" }));
+  });
 });

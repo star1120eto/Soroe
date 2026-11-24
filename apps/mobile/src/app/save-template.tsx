@@ -80,13 +80,14 @@ export default function SaveTemplateScreen() {
     }
   };
 
-  // Freeの2件目。課金導線(Premium)はEPIC-08で追加する。ここでは既存のテンプレートの確認へ誘導する。
+  // Freeの2件目。Premium画面(入力はこの画面に残る)か、既存のテンプレートの確認へ誘導する。
   if (limitReached) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ErrorState title="これ以上保存できません" description={describeTemplateError({ code: 'resource-exhausted' }, 'save')} />
         <View style={styles.content}>
-          <Button label="既存のテンプレートを確認する" onPress={() => router.dismissTo('/templates')} variant="primary" />
+          <Button label="Premiumを見る" onPress={() => router.push({ pathname: '/paywall', params: { trigger: 'template-limit' } })} variant="primary" />
+          <Button label="既存のテンプレートを確認する" onPress={() => router.dismissTo('/templates')} variant="secondary" />
           <Button label="後で" onPress={() => router.back()} variant="secondary" />
         </View>
       </SafeAreaView>

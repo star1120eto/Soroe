@@ -141,5 +141,15 @@ service cloud.firestore {
         (resource == null || resource.data.uid == request.auth.uid);
       allow write: if false;
     }
+
+    // PAY-004: 権利はRevenueCat Webhook(Admin SDK)だけが書く。本人は状態を読める(UI表示の補助。
+    // 機能の可否はサーバーがgetPlanで判定する)。冪等キーのwebhookEventsはclientから触れない。
+    match /entitlements/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /webhookEvents/{eventId} {
+      allow read, write: if false;
+    }
   }
 }

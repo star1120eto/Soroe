@@ -148,8 +148,9 @@ export default function InviteScreen() {
         {isSignedIn && acceptProblem === 'limit-reached' ? (
           <>
             {/* 上限を超えたまま参加させない。プレビューは維持し、既存リストの
-                アーカイブへ誘導する(仕様SHARE-02)。Premium導線はPAY-001で追加する。 */}
+                アーカイブかPremiumへ誘導する(仕様SHARE-02)。 */}
             <Button label="既存リストをアーカイブ" onPress={goHome} />
+            <Button label="Premiumを見る" onPress={() => router.push({ pathname: '/paywall', params: { trigger: 'list-limit' } })} variant="secondary" />
             <Button label="後で" onPress={goHome} variant="text" />
           </>
         ) : isSignedIn && acceptProblem ? (

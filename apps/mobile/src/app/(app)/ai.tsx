@@ -79,6 +79,13 @@ export default function AiScreen() {
         )}
 
         <Button label="リストを作る" onPress={() => router.push('/ai-flow')} disabled={!canStart} variant="primary" />
+        {exhausted ? (
+          <Button
+            label="Premiumを見る"
+            onPress={() => router.push({ pathname: '/paywall', params: { trigger: 'ai-limit' } })}
+            variant="secondary"
+          />
+        ) : null}
         {pendingRequestId ? (
           <Button
             label="前回の結果を見る"

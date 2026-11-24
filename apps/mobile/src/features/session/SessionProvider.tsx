@@ -1,6 +1,8 @@
 import type { UserProfile } from '@soroe/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { syncPurchasesUser } from '../billing/EntitlementGateway';
+import { purchasesGateway } from '../billing/purchasesGateway';
 import { signOut, subscribeToAuthState } from './AuthGateway';
 import { createUserProfile, getUserProfile, updateUserLanguage } from './SessionRepository';
 
@@ -47,6 +49,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         });
     });
   }, []);
+
+  // PAY-002: Firebase uidをRevenueCatのApp User IDへ同期する(ログイン/ログアウト)。
+  useEffect(() => {
+    if (status === 'loading') return;
+    void syncPurchasesUser(purchasesGateway, uid);
+  }, [uid, status]);
 
   const createProfile = useCallback(
     async (input: { displayName: string; language: 'ja' | 'en' }) => {

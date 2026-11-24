@@ -50,9 +50,12 @@ export default function NewListScreen() {
     );
   }, [listId]);
 
+  const [limitReached, setLimitReached] = useState(false);
+
   const submit = async () => {
     setValidationError(null);
     setRequestError(null);
+    setLimitReached(false);
 
     const parsed = createListInputSchema.safeParse({ name, type, color: colorToken, icon });
     if (!parsed.success) {
@@ -73,6 +76,7 @@ export default function NewListScreen() {
       void created;
     } catch (error) {
       setRequestError(describeListActionError(error));
+      setLimitReached((error as { code?: string } | null)?.code === 'resource-exhausted');
     } finally {
       setIsSubmitting(false);
     }
@@ -83,6 +87,13 @@ export default function NewListScreen() {
       <View style={styles.content}>
         {createBlockedOffline ? <Banner message={OFFLINE_REQUIRED_MESSAGE} variant="warning" /> : null}
         {requestError ? <Banner message={requestError} variant="danger" /> : null}
+        {limitReached ? (
+          <Button
+            label="Premiumを見る"
+            onPress={() => router.push({ pathname: '/paywall', params: { trigger: 'list-limit' } })}
+            variant="secondary"
+          />
+        ) : null}
 
         <Input
           placeholder="リスト名を入力"
