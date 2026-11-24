@@ -1,12 +1,16 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Banner, Button, Chip, Colors, Spacing, Typography } from '@/design-system';
+import { useEntitlement } from '@/features/billing/EntitlementProvider';
 import { useSession } from '@/features/session/SessionProvider';
 
 // 言語を切り替えられる設定画面。AUTH-006(認証方法の追加・解除)など他の設定は今後ここへ足す。
 export default function SettingsScreen() {
+  const router = useRouter();
+  const { snapshot } = useEntitlement();
   const { profile, setLanguage, signOut } = useSession();
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,6 +53,13 @@ export default function SettingsScreen() {
             onPress={() => changeLanguage('en')}
           />
         </View>
+
+        <Text style={[Typography.label, styles.label]}>プラン</Text>
+        <Button
+          label={snapshot.isPremium ? 'Premium(ご利用中)' : 'Premiumを見る'}
+          onPress={() => router.push({ pathname: '/paywall', params: { trigger: 'settings' } })}
+          variant="secondary"
+        />
 
         <Button label="ログアウト" onPress={signOut} variant="secondary" />
       </View>
